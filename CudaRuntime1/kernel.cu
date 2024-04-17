@@ -15,6 +15,10 @@
 union half_block_t {
     uint8_t bytes[4];
     uint32_t uint;
+    __host__ __device__ half_block_t invert_bytes_order() const{
+        half_block_t result = {bytes[3], bytes[2], bytes[1], bytes[0]};
+        return result;
+    }
 };
 
 using key_t = half_block_t;
@@ -35,12 +39,12 @@ union block_t {
 };
 
 std::ostream& operator << (std::ostream& s, const block_t& block) {
-    for (int i = 0; i < sizeof(block_t); ++i) {
+    for (int i = sizeof(block_t)-1; i >=0; --i) {
         uint8_t high, low;
         high = block.bytes[i] >> 4;
         low = block.bytes[i] & 0xf;
-        s << (high < 10 ? ('0' + high) : ('A' + high));
-        s << (low < 10 ? ('0' + low) : ('A' + low));
+        s << (char)(high < 10 ? ('0' + high) : ('A' + high - 10));
+        s << (char)(low < 10 ? ('0' + low) : ('A' + low - 10));
     }
     return s;
 }
@@ -70,8 +74,12 @@ __device__ uint32_t Add(const half_block_t a, const half_block_t b) {
     return a.uint ^ b.uint;
 }
 
-__device__ uint32_t Add32(const half_block_t a, const half_block_t b) {
-    return a.uint + b.uint;
+__device__ half_block_t Add32(half_block_t a, half_block_t b) {
+    //a = a.invert_bytes_order();
+    //b = b.invert_bytes_order();
+    a.uint = a.uint + b.uint;
+    //return a.invert_bytes_order();
+    return a;
 }
 
 //__host__ void ExpandKey(const uint8_t* key)
@@ -127,7 +135,7 @@ __device__ half_block_t magma_T(const half_block_t data) {
 
 __device__ half_block_t magma_g(const key_t round_key, const half_block_t block) {
     half_block_t internal = block;
-    internal.uint = Add32(internal, round_key);
+    internal = Add32(internal, round_key);
     internal = magma_T(internal);
     internal.uint = (internal.uint << 11) | (internal.uint >> 21);
 
@@ -156,12 +164,11 @@ __device__ block_t magma_G_last(const key_t round_key, const block_t block)
     return result;
 }
 
-__global__ void Encrypt(const key_set& round_key, const block_t& block, block_t& result_block)
+__global__ void Encrypt (const key_set& round_key, const block_t& block, block_t& result_block)
 {
-
     // Первое преобразование G
-    block_t result;
-    result = magma_G(round_key.keys[0], block);
+    block_t result = { block.lo.invert_bytes_order(), block.hi.invert_bytes_order() };
+    result = magma_G(round_key.keys[0], result);
     // Последующие (со второго по тридцать первое) преобразования G
     for (int i = 1; i < 24; ++i)
         result = magma_G(round_key.keys[i % 8], result);
@@ -169,21 +176,21 @@ __global__ void Encrypt(const key_set& round_key, const block_t& block, block_t&
         result = magma_G(round_key.keys[7 - i % 8], result);
     // Последнее (тридцать второе) преобразование G
     result = magma_G_last(round_key.keys[0], result);
-    result_block = result;
+    result_block = { result.lo.invert_bytes_order(), result.hi.invert_bytes_order() };
 }
 
 
-__global__ void Decrypt(const key_set& round_key, const block_t& block, block_t& result_block)
+__global__ void Decrypt (const key_set& round_key, const block_t& block, block_t& result_block)
 {
-    block_t result;
-    result = magma_G(round_key.keys[0], block);
+    block_t result = { block.lo.invert_bytes_order(), block.hi.invert_bytes_order() };;
+    result = magma_G(round_key.keys[0], result);
     for (int i = 1; i < 8; ++i)
         result = magma_G(round_key.keys[i % 8], result);
     for (int i = 0; i < 23; ++i)
         result = magma_G(round_key.keys[7 - i % 8], result);
     // Последнее (тридцать второе) преобразование G
     result = magma_G_last(round_key.keys[0], result);
-    result_block = result;
+    result_block = { result.lo.invert_bytes_order(), result.hi.invert_bytes_order() };
 }
 
 
@@ -220,36 +227,42 @@ int main()
     // SetConsoleOutputCP(1251);
     // SetConsoleCP(1251);
     SetConsoleOutputCP(65001);
-    block_t en_blk, dec_blk;
+    block_t en_blk, encrypt_block;
     const unsigned char encrypt_test_string[8] = {
         0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe
     };
+    /*const unsigned char encrypt_test_string[8] = {
+        0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10
+    };*/
     memccpy(en_blk.bytes, encrypt_test_string, 8, 8);
 
-    std::cout << en_blk.lo.uint << std::endl;
-    en_blk.hi.uint = uint8ToUint32(en_blk.hi.bytes);
-    en_blk.lo.uint = uint8ToUint32(en_blk.lo.bytes);
-    uint32ToUint8(en_blk.hi.uint, en_blk.hi.bytes);
-    uint32ToUint8(en_blk.lo.uint, en_blk.lo.bytes);
-    std::cout << en_blk.hi.uint << std::endl;
-    std::cout << en_blk.lo.uint << std::endl;
 
-
-    const unsigned char decrypt_test_string[8] = {
+    const unsigned char ecrypt_string[8] = {
         0x3d, 0xca, 0xd8, 0xc2, 0xe5, 0x01, 0xe9, 0x4e
     };
-    memccpy(dec_blk.bytes, decrypt_test_string, 8, 8);
+    memccpy(encrypt_block.bytes, ecrypt_string, 8, 8);
 
     const key_set keys = {
+        key_t {0xcc, 0xdd, 0xee, 0xff},
+        key_t {0x88, 0x99, 0xaa, 0xbb},
+        key_t {0x44, 0x55, 0x66, 0x77},
+        key_t {0x00, 0x11, 0x22, 0x33},
+        key_t {0xf3, 0xf2, 0xf1, 0xf0},
+        key_t {0xf7, 0xf6, 0xf5, 0xf4},
+        key_t {0xfb, 0xfa, 0xf9, 0xf8},
+        key_t {0xff, 0xfe, 0xfd, 0xfc}
+    };
+
+    /*const key_set keys = {
         key_t {0xff, 0xfe, 0xfd, 0xfc},
         key_t {0xfb, 0xfa, 0xf9, 0xf8},
         key_t {0xf7, 0xf6, 0xf5, 0xf4},
         key_t {0xf3, 0xf2, 0xf1, 0xf0},
         key_t {0x00, 0x11, 0x22, 0x33},
-        key_t {0x44, 0x55, 0x66, 0x77},
+        key_t {0x44, 0x55, 0x66, 0x77},        
         key_t {0x88, 0x99, 0xaa, 0xbb},
         key_t {0xcc, 0xdd, 0xee, 0xff}
-    };
+    };*/
 
     cudaDeviceProp prop;
     int count;
@@ -298,13 +311,15 @@ int main()
 
     //printf("Encryption text: {%s}\n", result);
     std::cout << "Encryption text: " << resultEncrypt << std::endl;
-    std::cout << "encrypt_test_string: " << dec_blk << std::endl;
+    std::cout << "Standart_encrypt_text: " << encrypt_block << std::endl;
 
     block_t resultDecrypt{};
 
     decryptCuda(resultEncrypt.bytes, resultDecrypt.bytes, keys);
 
     //printf("Encryption text: {%s}\n", result);
+    //resultDecrypt.hi.uint = uint8ToUint32(resultDecrypt.hi.bytes);
+    //resultDecrypt.lo.uint = uint8ToUint32(resultDecrypt.lo.bytes);
     std::cout << "Decryption text: " << resultDecrypt << std::endl;
 
     cudaCheck(cudaDeviceReset());
