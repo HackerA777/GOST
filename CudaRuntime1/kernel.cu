@@ -57,6 +57,44 @@ void cudaCheck__(cudaError_t e, const char* file, int line) {
 
 #define cudaCheck(e) cudaCheck__((e), __FILE__, __LINE__)
 
+void getInfoDevice() {
+    cudaDeviceProp prop;
+    int count;
+    cudaError_t(cudaGetDeviceCount(&count));
+    for (int i = 0; i < count; i++) {
+        cudaError_t(cudaGetDeviceProperties(&prop, i));
+        printf("--- Общая информация об устройстве %d ---\n", i);
+        printf("Имя: %s\n", prop.name);
+        printf("Вычислительные возможности: %d.%d\n", prop.major, prop.minor);
+        printf("Тактовая частота: %d\n", prop.clockRate);
+        printf("Перекрытие копирования: ");
+        if (prop.deviceOverlap)
+            printf("Разрешено\n");
+        else
+            printf("Запрещено\n");
+        printf("Тайм-аут выполнения ядра: ");
+        if (prop.kernelExecTimeoutEnabled)
+            printf("Включён\n");
+        else
+            printf("Выключен\n");
+        printf("--- Информация о памяти для устройства %d ---\n", i);
+        printf("Всего глобальной памяти: %ld\n", prop.totalGlobalMem);
+        printf("Всего константной памяти: %ld\n", prop.totalConstMem);
+        printf("Максимальный шаг: %ld\n", prop.memPitch);
+        printf("Выравнивание текстур: %ld\n", prop.textureAlignment);
+
+        printf("--- Информация о мультипроцессорах для устройства %d ---\n", i);
+        printf("Количество мультипроцессоров: %d\n", prop.multiProcessorCount);
+        printf("Разделяемая память на один МП: %ld\n", prop.sharedMemPerBlock);
+        printf("Регистров на один МП: %d\n", prop.regsPerBlock);
+        printf("Нитей в варпе: %d\n", prop.warpSize);
+        printf("Макс. количество ниетй в блоке: %d\n", prop.maxThreadsPerBlock);
+        printf("Макс. количество нитей по измерениям: (%d, %d, %d)\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
+        printf("Максимальные размеры сетки: (%d, %d, %d)\n", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
+        printf("\n");
+    }
+}
+
 __device__ const uint8_t table[8][16] = {
     {12, 4, 6, 2, 10, 5, 11, 9, 14, 8, 13, 7, 0, 3, 15, 1},
     {6, 8, 2, 3, 9, 10, 5, 12, 1, 14, 4, 7, 11, 13, 0, 15},
@@ -90,62 +128,10 @@ __device__ uint32_t Add(const half_block_t a, const half_block_t b) {
 
 __device__ uint32_t Add32(const half_block_t a, const half_block_t b) {
     return a.uint + b.uint;
-    /*half_block_t c, internal;
-    for (int i = 3; i >= 0; --i)
-    {
-        internal = a.bytes[i] + b.bytes[i] + (internal.bytes >> 8);
-        c[i] = internal & 0xff;
-    }*/
 }
 
-//__host__ void ExpandKey(const uint8_t* key)
-//{
-//    memcpy(iter_keys[0], key, 4);
-//    memcpy(iter_keys[1], key + 4, 4);
-//    memcpy(iter_keys[2], key + 8, 4);
-//    memcpy(iter_keys[3], key + 12, 4);
-//    memcpy(iter_keys[4], key + 16, 4);
-//    memcpy(iter_keys[5], key + 20, 4);
-//    memcpy(iter_keys[6], key + 24, 4);
-//    memcpy(iter_keys[7], key + 28, 4);
-//
-//    memcpy(iter_keys[8], key, 4);
-//    memcpy(iter_keys[9], key + 4, 4);
-//    memcpy(iter_keys[10], key + 8, 4);
-//    memcpy(iter_keys[11], key + 12, 4);
-//    memcpy(iter_keys[12], key + 16, 4);
-//    memcpy(iter_keys[13], key + 20, 4);
-//    memcpy(iter_keys[14], key + 24, 4);
-//    memcpy(iter_keys[15], key + 28, 4);
-//
-//    memcpy(iter_keys[16], key, 4);
-//    memcpy(iter_keys[17], key + 4, 4);
-//    memcpy(iter_keys[18], key + 8, 4);
-//    memcpy(iter_keys[19], key + 12, 4);
-//    memcpy(iter_keys[20], key + 16, 4);
-//    memcpy(iter_keys[21], key + 20, 4);
-//    memcpy(iter_keys[22], key + 24, 4);
-//    memcpy(iter_keys[23], key + 28, 4);
-//
-//    memcpy(iter_keys[24], key + 28, 4);
-//    memcpy(iter_keys[25], key + 24, 4);
-//    memcpy(iter_keys[26], key + 20, 4);
-//    memcpy(iter_keys[27], key + 16, 4);
-//    memcpy(iter_keys[28], key + 12, 4);
-//    memcpy(iter_keys[29], key + 8, 4);
-//    memcpy(iter_keys[30], key + 4, 4);
-//    memcpy(iter_keys[31], key, 4);
-//}
 __device__ half_block_t magma_T(const half_block_t data) {
     half_block_t result;
-    /*uint8_t first_part_byte, sec_part_byte;
-    for (int i = 0; i < 4; ++i) {
-        first_part_byte = data.bytes[i] >> 4;
-        sec_part_byte = (data.bytes[i] & 0x0f);
-        first_part_byte = table[i * 2][first_part_byte];
-        sec_part_byte = table[i * 2 + 1][sec_part_byte];
-        result.bytes[i] = (first_part_byte << 4) | sec_part_byte;
-    }*/
     for (int i = 0; i < 4; ++i) {
         result.bytes[i] = table4x256[i][data.bytes[i]];
     }
@@ -154,7 +140,6 @@ __device__ half_block_t magma_T(const half_block_t data) {
 
 __device__ half_block_t magma_g(const key_t round_key, const half_block_t block) {
     half_block_t internal = block;
-    //half_block_t key = invert(round_key);
     internal.uint = Add32(block, round_key);
     internal = magma_T(internal);
     internal.uint = (internal.uint << 11) | (internal.uint >> 21);
@@ -187,30 +172,26 @@ __device__ block_t magma_G_last(const key_t round_key, const block_t block)
 __global__ void Encrypt(const key_set& round_key, const block_t& block, block_t& result_block)
 {
     // Первое преобразование G
-    block_t result;
-    result = magma_G(round_key.keys[0], block);
+    result_block = magma_G(round_key.keys[0], block);
     // Последующие (со второго по тридцать первое) преобразования G
-    for (int i = 1; i < 24; ++i)
-        result = magma_G(round_key.keys[i % 8], result);
-    for (int i = 0; i < 7; ++i)
-        result = magma_G(round_key.keys[7 - i % 8], result);
+    for (int j = 1; j < 24; ++j)
+        result_block = magma_G(round_key.keys[j % 8], result_block);
+    for (int j = 0; j < 7; ++j)
+        result_block = magma_G(round_key.keys[7 - j % 8], result_block);
     // Последнее (тридцать второе) преобразование G
-    result = magma_G_last(round_key.keys[0], result);
-    result_block = result;
+    result_block = magma_G_last(round_key.keys[0], result_block);
 }
 
 
 __global__ void Decrypt(const key_set& round_key, const block_t& block, block_t& result_block)
 {
-    block_t result;
-    result = magma_G(round_key.keys[0], block);
+    result_block = magma_G(round_key.keys[0], block);
     for (int i = 1; i < 8; ++i)
-        result = magma_G(round_key.keys[i % 8], result);
+        result_block = magma_G(round_key.keys[i % 8], result_block);
     for (int i = 0; i < 23; ++i)
-        result = magma_G(round_key.keys[7 - i % 8], result);
+        result_block = magma_G(round_key.keys[7 - i % 8], result_block);
     // Последнее (тридцать второе) преобразование G
-    result = magma_G_last(round_key.keys[0], result);
-    result_block = result;
+    result_block = magma_G_last(round_key.keys[0], result_block);
 }
 
 
@@ -230,19 +211,19 @@ const key_set keys = {
 };
 
 void test() {
-    constexpr size_t size = 1024 * 1024 * 1024;
+    constexpr size_t size = 1024 * 1024;
     std::vector<block_t> data(size / sizeof(block_t));
     uint32_t i = 0;
     for (auto& b : data) b.ull = ++i << 32 | ++i;
 
     using duration = std::chrono::duration<double, std::milli>;
     auto start = std::chrono::high_resolution_clock::now();
+
+    std::cout << data.data() << std::endl;
     encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), size, keys);
     duration time = std::chrono::high_resolution_clock::now() - start;
-    std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED" << (size / 1024.0 / 1024 / 1024) / time.count() * 1000 << " GB/s" << std::endl;
-
+    std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED: " << (size / 1024.0 / 1024) / time.count() * 1000 << " GB/s" << std::endl;
 }
-
 
 int main()
 {
@@ -259,46 +240,6 @@ int main()
     };
     memccpy(enc_e_t.bytes, encrypt_exaple_text, 8, 8);
 
-    std::cout << sizeof(en_blk) << std::endl;
-
-
-
-    cudaDeviceProp prop;
-    int count;
-    cudaError_t(cudaGetDeviceCount(&count));
-    /*for (int i = 0; i < count; i++) {
-        cudaError_t(cudaGetDeviceProperties(&prop, i));
-        printf("--- Общая информация об устройстве %d ---\n", i);
-        printf("Имя: %s\n", prop.name);
-        printf("Вычислительные возможности: %d.%d\n", prop.major, prop.minor);
-        printf("Тактовая частота: %d\n", prop.clockRate);
-        printf("Перекрытие копирования: ");
-        if (prop.deviceOverlap)
-            printf("Разрешено\n");
-        else
-            printf("Запрещено\n");
-        printf("Тайм-аут выполнения ядра: ");
-        if (prop.kernelExecTimeoutEnabled)
-            printf("Включён\n");
-        else
-            printf("Выключен\n");
-        printf("--- Информация о памяти для устройства %d ---\n", i);
-        printf("Всего глобальной памяти: %ld\n", prop.totalGlobalMem);
-        printf("Всего константной памяти: %ld\n", prop.totalConstMem);
-        printf("Максимальный шаг: %ld\n", prop.memPitch);
-        printf("Выравнивание текстур: %ld\n", prop.textureAlignment);
-
-        printf("--- Информация о мультипроцессорах для устройства %d ---\n", i);
-        printf("Количество мультипроцессоров: %d\n", prop.multiProcessorCount);
-        printf("Разделяемая память на один МП: %ld\n", prop.sharedMemPerBlock);
-        printf("Регистров на один МП: %d\n", prop.regsPerBlock);
-        printf("Нитей в варпе: %d\n", prop.warpSize);
-        printf("Макс. количество ниетй в блоке: %d\n", prop.maxThreadsPerBlock);
-        printf("Макс. количество нитей по измерениям: (%d, %d, %d)\n", prop.maxThreadsDim[0], prop.maxThreadsDim[1], prop.maxThreadsDim[2]);
-        printf("Максимальные размеры сетки: (%d, %d, %d)\n", prop.maxGridSize[0], prop.maxGridSize[1], prop.maxGridSize[2]);
-        printf("\n");
-    }*/
-
     block_t resultEncrypt{};
 
     // uint8_t* iter_keys[32];
@@ -306,7 +247,6 @@ int main()
     std::cout << "encrypt_test_string: " << en_blk << std::endl;
 
     encryptCuda(encrypt_test_string, resultEncrypt.bytes, 8, keys);
-
 
     //printf("Encryption text: {%s}\n", result);
     std::cout << "Encryption text: " << resultEncrypt << std::endl;
@@ -340,25 +280,22 @@ cuda_ptr<T> cuda_alloc() {
 }
 
 template<class T>
-cuda_ptr<T[]> cuda_alloc(size_t n) {
+cuda_ptr<T> cuda_alloc(const size_t n) {
     T* ptr;
     cudaCheck(cudaMalloc((void**)&ptr, sizeof(T) * n));
-    return cuda_ptr<T[]>{ptr};
+    return cuda_ptr<T>{ptr};
 }
 
-void encryptCuda(const uint8_t* block, uint8_t* out_block, const size_t blockSize, const key_set& keys) {
+void encryptCuda(const uint8_t* block, uint8_t* out_block, const size_t dataSize, const key_set& keys) {
     cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
-    cuda_ptr<block_t> dev_block = cuda_alloc<block_t>();
-    cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>();
+    cuda_ptr<block_t> dev_block = cuda_alloc<block_t>(dataSize);
+    cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>(dataSize);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaSetDevice(0));
-
-
     cudaCheck(cudaMemcpy(dev_keys.get(), keys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
 
-    cudaCheck(cudaMemcpy(dev_block.get(), block, sizeof(block_t), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_block.get(), block, dataSize, cudaMemcpyHostToDevice));
 
     // cudaCheck(cudaGetLastError());
 
@@ -366,28 +303,20 @@ void encryptCuda(const uint8_t* block, uint8_t* out_block, const size_t blockSiz
 
     cudaCheck(cudaDeviceSynchronize());
 
-    cudaCheck(cudaMemcpy(out_block, dev_out_block.get(), sizeof(block_t), cudaMemcpyDeviceToHost));
-
-
-
-    // return cudaStatus;
+    cudaCheck(cudaMemcpy(out_block, dev_out_block.get(), dataSize, cudaMemcpyDeviceToHost));
 }
 
 
-void decryptCuda(const uint8_t* block, uint8_t* out_block, const size_t blockSize, const key_set& keys) {
+void decryptCuda(const uint8_t* block, uint8_t* out_block, const size_t dataSize, const key_set& keys) {
     cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
-    cuda_ptr<block_t> dev_block = cuda_alloc<block_t>();
-    cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>();
+    cuda_ptr<block_t> dev_block = cuda_alloc<block_t>(dataSize);
+    cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>(dataSize);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaSetDevice(0));
-    std::cout << dev_block.get() << std::endl;
-
-
     cudaCheck(cudaMemcpy(dev_keys.get(), keys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
 
-    cudaCheck(cudaMemcpy(dev_block.get(), block, sizeof(block_t), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_block.get(), block, dataSize, cudaMemcpyHostToDevice));
 
     // cudaCheck(cudaGetLastError());
 
@@ -396,17 +325,5 @@ void decryptCuda(const uint8_t* block, uint8_t* out_block, const size_t blockSiz
     // cuddaGetLastError
     cudaCheck(cudaDeviceSynchronize());
 
-    cudaCheck(cudaMemcpy(out_block, dev_out_block.get(), sizeof(block_t), cudaMemcpyDeviceToHost));
-
-
-
-
-    // return cudaStatus;
+    cudaCheck(cudaMemcpy(out_block, dev_out_block.get(), dataSize, cudaMemcpyDeviceToHost));
 }
-
-
-
-// text: fedcba9876543210
-// encr_text: 4ee901e5c2d8ca3d
-// gipher_text: 4ee901e5c2d8ca3d
-// dec_text: fedcba9876543210
