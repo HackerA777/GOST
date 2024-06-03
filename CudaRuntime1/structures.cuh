@@ -1,5 +1,6 @@
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#ifndef H_STRUCTURES
+#define H_STRUCTURES
+
 #include <iostream>
 
 union half_block_t {
@@ -11,7 +12,7 @@ using key_t = half_block_t;
 
 struct key_set {
     key_t keys[8];
-    uint8_t bytes[sizeof(half_block_t) * 8];
+    //uint8_t bytes[sizeof(half_block_t) * 8];
 };
 
 struct round_key_set {
@@ -36,3 +37,5 @@ std::ostream& operator << (std::ostream& s, const block_t& block) {
     }
     return s;
 }
+
+#endif
