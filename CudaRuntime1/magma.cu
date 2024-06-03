@@ -1,14 +1,15 @@
 ﻿#include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 #include "magma.cuh"
+#include <vector>
+#include <random>
+#include <chrono>
 
 /*#include <stdint.h>
 #include <cstring>
 #include <string.h>
 #include <cooperative_groups.h>
-#include <vector>
-#include <random>
-#include <chrono>*/
+*/
 
 
 #define cudaCheck(e) cudaCheck__((e), __FILE__, __LINE__)
@@ -140,14 +141,14 @@ cuda_ptr<T> cuda_alloc(const size_t n) {
     return cuda_ptr<T>{ptr};
 }
 
-void magma::encryptCuda(const uint8_t* block, uint8_t* out_block, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize) {
+void magma::encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize) {
     cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
     cuda_ptr<block_t> dev_block = cuda_alloc<block_t>(dataSize);
     cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>(dataSize);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpy(dev_keys.get(), keys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
 
     cudaCheck(cudaMemcpy(dev_block.get(), block, dataSize, cudaMemcpyHostToDevice));
 
@@ -161,14 +162,14 @@ void magma::encryptCuda(const uint8_t* block, uint8_t* out_block, const size_t d
 }
 
 
-void magma::decryptCuda(const uint8_t* block, uint8_t* out_block, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize) {
+void magma::decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize) {
     cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
     cuda_ptr<block_t> dev_block = cuda_alloc<block_t>(dataSize);
     cuda_ptr<block_t> dev_out_block = cuda_alloc<block_t>(dataSize);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpy(dev_keys.get(), keys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
 
     cudaCheck(cudaMemcpy(dev_block.get(), block, dataSize, cudaMemcpyHostToDevice));
 
@@ -201,29 +202,29 @@ void magma::checkEcnAndDec() {
     };
 
     block_t testBlock, resultBlock, validBlock; 
+    key_set testKeys;
     std::copy(testString, testString + 8, testBlock.bytes);
     std::copy(encryptValidString, encryptValidString + 8, validBlock.bytes);
+    std::copy(keys, keys + 32, testKeys.keys->bytes);
 
-    copyKesys(keys);
-
-    encryptCuda( testBlock.bytes, resultBlock.bytes, 8, 1, 1);
+    encryptCuda( testBlock.bytes, resultBlock.bytes, testKeys, 8, 1, 1);
     std::cout << "Test string: " << testBlock << std::endl;
     std::cout << "Result encryption test string: " << resultBlock << std::endl;
     std::cout << "Valide encryption string: " << validBlock << std::endl;
-    if (validBlock.bytes == resultBlock.bytes)
+    if (validBlock.ull == resultBlock.ull)
         std::cout << "Encryption algoritm valid!" << std::endl;
     else
         std::cout << "Encryption algoritm unvalid!" << std::endl;
 
-    decryptCuda(resultBlock.bytes, resultBlock.bytes, 8, 1, 1);
+    decryptCuda(resultBlock.bytes, resultBlock.bytes, testKeys, 8, 1, 1);
     std::cout << "Result decryption test string: " << resultBlock << std::endl;
-    if (testBlock.bytes == resultBlock.bytes)
+    if (testBlock.ull == resultBlock.ull)
         std::cout << "Decryption algoritm valid!" << std::endl;
     else
         std::cout << "Decryption algoritm unvalid!" << std::endl;
 }
 
-/*void test() {
+void magma::testSpeedRandomBytes() {
     constexpr size_t size = 1024 * 1024;
     std::vector<block_t> data(size / sizeof(block_t));
     uint32_t i = 0;
@@ -232,8 +233,15 @@ void magma::checkEcnAndDec() {
     using duration = std::chrono::duration<double, std::milli>;
     auto start = std::chrono::high_resolution_clock::now();
 
-    std::cout << data.data() << std::endl;
-    encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), size, keys, 1, 1);
+    std::cout << "data vector: " << data.data() << std::endl;
+    encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys, size, 1, 1);
     duration time = std::chrono::high_resolution_clock::now() - start;
     std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED: " << (size / 1024.0 / 1024) / time.count() * 1000 << " GB/s" << std::endl;
-}*/
+}
+
+magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned int blockSize, const unsigned int gridSize) {
+    copyKeys(keys);
+    this->buffSize = buffSize;
+    this->blockSize = blockSize;
+    this->gridSize = gridSize;
+}

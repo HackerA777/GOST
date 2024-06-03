@@ -1,6 +1,5 @@
 #ifndef H_STRUCTURES
 #define H_STRUCTURES
-
 #include <iostream>
 
 union half_block_t {
@@ -27,7 +26,7 @@ union block_t {
     uint8_t bytes[sizeof(half_block_t) * 2];
 };
 
-std::ostream& operator << (std::ostream& s, const block_t& block) {
+inline std::ostream& operator << (std::ostream& s, const block_t& block) {
     for (int i = 0; i < sizeof(block_t); ++i) {
         uint8_t high, low;
         high = block.bytes[i] >> 4;
