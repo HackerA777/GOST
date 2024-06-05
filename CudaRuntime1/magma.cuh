@@ -18,10 +18,10 @@ public:
 	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int blockSize, const unsigned int gridSize);
 	
 	void checkEcnAndDec();
-	void testSpeedRandomBytes();
+	double testSpeedRandomBytes();
 
-	void encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize);
-	void decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize, const unsigned int blockSize, const unsigned int gridSize);
+	void encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
+	void decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
 	~magma() {
 	}
 };
