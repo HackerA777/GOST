@@ -31,7 +31,7 @@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
-    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 11.8.props" />
+    <Import Project="$(VCTargetsPath)\BuildCustomizations\CUDA 12.0.props" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
@@ -78,16 +78,15 @@
     </CudaCompile>
   </ItemDefinitionGroup>
  <ItemGroup>
-    <CudaCompile Include="checkValidEnc&amp;Dec.cu" />
     <CudaCompile Include="getInfoOfDevice.cu" />
     <CudaCompile Include="magma.cu" />
-    <CudaCompile Include="magmaClass.cu" />
-    <CudaCompile Include="magmaFunctions.cu" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="magmaClass.cuh" />
-    <ClInclude Include="magmaFunctions.cuh" />
+	<ClInclude Include="magma.cuh" />
     <ClInclude Include="structures.cuh" />
+  </ItemGroup>
+  <ItemGroup>
+    <CudaCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

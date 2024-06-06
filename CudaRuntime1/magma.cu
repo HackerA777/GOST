@@ -298,7 +298,7 @@ double magma::testSpeedRandomBytes() {
     std::vector<block_t> data(size);
     uint32_t i = 0;
     for (auto& b : data) b.ull = ++i << 32 | ++i;
-    encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys,1);
+    encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys, 16);
     using duration = std::chrono::duration<double, std::milli>;
     auto start = std::chrono::high_resolution_clock::now();
 
@@ -309,7 +309,16 @@ double magma::testSpeedRandomBytes() {
     return speed;
 }
 
-magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned int blockSize, const unsigned int gridSize) {
+
+void magma::setGridSize(const size_t newGridSize) {
+    gridSize = newGridSize;
+}
+
+void magma::setBlockSize(const size_t newBlockSize) {
+    blockSize = newBlockSize;
+}
+
+magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize ) {
     copyKeys(keys);
     this->buffSize = buffSize;
     this->blockSize = blockSize;

@@ -6,8 +6,8 @@ class magma {
 private:
 	key_set keys;
 	size_t buffSize;
-	unsigned int blockSize;
 	unsigned int gridSize;
+	unsigned int blockSize;
 
 	void copyKeys(const unsigned char inputKeys[32]) {
 		std::copy(inputKeys, inputKeys + 32, keys.keys->bytes);
@@ -15,10 +15,13 @@ private:
 
 public:
 	//magma() {};
-	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int blockSize, const unsigned int gridSize);
+	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize);
 	
 	void checkEcnAndDec();
 	double testSpeedRandomBytes();
+
+	void setGridSize(const size_t newGridSize);
+	void setBlockSize(const size_t newBlockSize);
 
 	void encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
 	void decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
