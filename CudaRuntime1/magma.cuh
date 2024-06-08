@@ -1,10 +1,11 @@
+#pragma once
 #ifndef H_MAGMA
 #define H_MAGMA
 #include "structures.cuh"
 
 class magma {
 private:
-	key_set keys;
+	magmaKeySet keys;
 	size_t buffSize;
 	unsigned int gridSize;
 	unsigned int blockSize;
@@ -18,13 +19,14 @@ public:
 	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize);
 	
 	void checkEcnAndDec();
-	double testSpeedRandomBytes();
+	double testSpeedUnequalBytes();
 
 	void setGridSize(const size_t newGridSize);
 	void setBlockSize(const size_t newBlockSize);
 
-	void encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
-	void decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t dataSize);
+	void encryptCuda(const uint8_t* block, uint8_t* out_block, const magmaKeySet inputKeys, const size_t dataSize);
+	void decryptCuda(const uint8_t* block, uint8_t* out_block, const magmaKeySet inputKeys, const size_t dataSize);
+	void searchBestBlockAndGridSize();
 	~magma() {
 	}
 };

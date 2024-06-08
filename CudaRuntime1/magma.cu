@@ -5,21 +5,7 @@
 #include <random>
 #include <chrono>
 
-/*#include <stdint.h>
-#include <cstring>
-#include <string.h>
-#include <cooperative_groups.h>
-*/
 
-
-#define cudaCheck(e) cudaCheck__((e), __FILE__, __LINE__)
-
-void cudaCheck__(cudaError_t e, const char* file, int line) {
-    if (e == cudaSuccess)
-        return;
-    std::cerr << " File: " << file << "( line " << line << " ): " << cudaGetErrorString(e) << std::endl;
-    exit(e);
-}
 
 static __device__ constexpr uint8_t table[8][16] = {
     {12, 4, 6, 2, 10, 5, 11, 9, 14, 8, 13, 7, 0, 3, 15, 1},
@@ -43,32 +29,32 @@ struct Tables {
     uint8_t s_table4x256[4][256];
 };
 
-static __device__ half_block_t invert(const half_block_t block) {
-    half_block_t result;
+static __device__ magmaHalfBlockT invert(const magmaHalfBlockT block) {
+    magmaHalfBlockT result;
     for (int i = 0; i < 4; ++i) {
         result.bytes[i] = block.bytes[3 - i];
     }
     return result;
 }
 
-static __device__ uint32_t Add(const half_block_t a, const half_block_t b) {
+static __device__ uint32_t Add(const magmaHalfBlockT a, const magmaHalfBlockT b) {
     return a.uint ^ b.uint;
 }
 
-static __device__ uint32_t Add32(const half_block_t a, const half_block_t b) {
+static __device__ uint32_t Add32(const magmaHalfBlockT a, const magmaHalfBlockT b) {
     return a.uint + b.uint;
 }
 
-static __device__ half_block_t magma_T(const half_block_t data, const Tables& t) {
-    half_block_t result;
+static __device__ magmaHalfBlockT magma_T(const magmaHalfBlockT data, const Tables& t) {
+    magmaHalfBlockT result;
     for (int i = 0; i < 4; ++i) {
         result.bytes[i] = t.s_table4x256[i][data.bytes[i]];
     }
     return result;
 }
 
-static __device__ half_block_t magma_g(const key_t round_key, const half_block_t block, const Tables& t) {
-    half_block_t internal = block;
+static __device__ magmaHalfBlockT magma_g(const magmaKeyT round_key, const magmaHalfBlockT block, const Tables& t) {
+    magmaHalfBlockT internal = block;
     internal.uint = Add32(block, round_key);
     internal = magma_T(internal, t);
     internal.uint = (internal.uint << 11) | (internal.uint >> 21);
@@ -76,9 +62,9 @@ static __device__ half_block_t magma_g(const key_t round_key, const half_block_t
     return internal;
 }
 
-static __device__ block_t magma_G(const key_t round_key, const block_t block, const Tables& t) {
+static __device__ magmaBlockT magma_G(const magmaKeyT round_key, const magmaBlockT block, const Tables& t) {
 
-    block_t result = block;
+    magmaBlockT result = block;
     result.lo = magma_g(round_key, result.lo, t);
     result.lo.uint = Add(result.lo, block.hi);
 
@@ -86,9 +72,9 @@ static __device__ block_t magma_G(const key_t round_key, const block_t block, co
     return result;
 }
 
-static __device__ block_t magma_G_last(const key_t round_key, const block_t block, const Tables& t)
+static __device__ magmaBlockT magma_G_last(const magmaKeyT round_key, const magmaBlockT block, const Tables& t)
 {
-    block_t result = block;
+    magmaBlockT result = block;
     result.lo = magma_g(round_key, result.lo,t);
     result.lo.uint = Add(result.lo, block.hi);
 
@@ -98,9 +84,9 @@ static __device__ block_t magma_G_last(const key_t round_key, const block_t bloc
     return result;
 }
 
-static __global__ void encrypt(const key_set& round_key, block_t*  blocks, const size_t count)
+static __global__ void encrypt(const magmaKeySet& round_key, magmaBlockT* blocks, const size_t count)
 {
-    __shared__ key_set s_keys;
+    __shared__ magmaKeySet s_keys;
 
     for (auto j = threadIdx.x; j < 32; j += blockDim.x)
         s_keys.keys[j] = round_key.keys[j];
@@ -121,7 +107,7 @@ static __global__ void encrypt(const key_set& round_key, block_t*  blocks, const
 
     for (auto i = tid; i < count; i+=tcnt) {
 
-        block_t tempBlock = blocks[i];
+        magmaBlockT tempBlock = blocks[i];
         // Первое преобразование G
         tempBlock = magma_G(s_keys.keys[0], tempBlock, t);
         // Последующие (со второго по тридцать первое) преобразования G
@@ -136,10 +122,9 @@ static __global__ void encrypt(const key_set& round_key, block_t*  blocks, const
 
 }
 
-
-static __global__ void decrypt(const key_set& round_key, block_t* blocks, const size_t count)
+static __global__ void decrypt(const magmaKeySet& round_key, magmaBlockT* blocks, const size_t count)
 {
-    __shared__ key_set s_keys;
+    __shared__ magmaKeySet s_keys;
 
     for (auto j = threadIdx.x; j < 32; j += blockDim.x)
         s_keys.keys[j] = round_key.keys[j];
@@ -157,7 +142,7 @@ static __global__ void decrypt(const key_set& round_key, block_t* blocks, const 
     auto tid = blockDim.x * blockIdx.x + threadIdx.x;
     auto tcnt = gridDim.x * blockDim.x;
     for (auto i = tid; i < count; i += tcnt) {
-        block_t tempBlock = blocks[i];
+        magmaBlockT tempBlock = blocks[i];
         // Первое преобразование G
         tempBlock = magma_G(s_keys.keys[0], tempBlock, t);
         // Последующие (со второго по тридцать первое) преобразования G
@@ -170,86 +155,71 @@ static __global__ void decrypt(const key_set& round_key, block_t* blocks, const 
     }
 }
 
-template<class T>
-struct CudaDeleter {
-    void operator()(std::remove_all_extents_t<T>* ptr) { cudaFree(ptr); };
-};
-
-template<class T>
-using cuda_ptr = std::unique_ptr < T, CudaDeleter<T> >;
-
-template<class T>
-cuda_ptr<T> cuda_alloc() {
-    T* ptr;
-    cudaCheck(cudaMalloc((void**)&ptr, sizeof(T)));
-    return cuda_ptr<T>{ptr};
-}
-
-template<class T>
-cuda_ptr<T> cuda_alloc(const size_t n) {
-    std::remove_extent_t<T>* ptr;
-    cudaCheck(cudaMalloc((void**)&ptr, sizeof(std::remove_extent_t<T>) * n));
-    return cuda_ptr<T>{ptr};
-}
-
-template<class T>
-cuda_ptr<T> cuda_alloc_async(const size_t n) {
-    std::remove_extent_t<T>* ptr;
-    cudaCheck(cudaMallocAsync((void**)&ptr, sizeof(std::remove_extent_t<T>) * n, 0));
-    return cuda_ptr<T>{ptr};
-}
-
-void magma::encryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys, const size_t count) {
-    cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
-    cuda_ptr<block_t[]> dev_block = cuda_alloc_async<block_t[]>(count);
-    //cuda_ptr<block_t[]> dev_out_block = cuda_alloc<block_t[]>(count);
+void magma::encryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaKeySet inputKeys, const size_t countBlocks) {
+    cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
-    cudaCheck(cudaHostRegister((void*)block, count * sizeof(block_t), cudaHostRegisterDefault));
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaHostRegister((void*)blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
 
-    cudaCheck(cudaMemcpyAsync(dev_block.get(), block, count*sizeof(block_t), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks*sizeof(magmaBlockT), cudaMemcpyHostToDevice));
     cudaCheck(cudaGetLastError());
     // cudaCheck(cudaGetLastError());
 
-    encrypt <<< blockSize, gridSize >> > (*dev_keys, dev_block.get(), count);
+    encrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
     cudaCheck(cudaGetLastError());
-    if(block != out_block)
-        cudaCheck(cudaHostRegister((void*)out_block, count * sizeof(block_t), cudaHostRegisterDefault));
+    if(blocks != out_blocks)
+        cudaCheck(cudaHostRegister((void*)out_blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
-    cudaCheck(cudaMemcpyAsync(out_block, dev_block.get(), count * sizeof(block_t), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpyAsync(out_blocks, dev_blocks.get(), countBlocks * sizeof(magmaBlockT), cudaMemcpyDeviceToHost));
 
-    if (block != out_block)
-        cudaCheck(cudaHostUnregister((void*)block));
+    if (blocks != out_blocks)
+        cudaCheck(cudaHostUnregister((void*)blocks));
 
     cudaCheck(cudaStreamSynchronize(0));
 
     
-    cudaCheck(cudaHostUnregister((void*)out_block));
+    cudaCheck(cudaHostUnregister((void*)out_blocks));
 }
 
 
-void magma::decryptCuda(const uint8_t* block, uint8_t* out_block, const key_set inputKeys,  const size_t count) {
-    cuda_ptr<key_set> dev_keys = cuda_alloc<key_set>();
-    cuda_ptr<block_t[]> dev_block = cuda_alloc<block_t[]>(count);
-    //cuda_ptr<block_t[]> dev_out_block = cuda_alloc<block_t[]>(count);
+void magma::decryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaKeySet inputKeys,  const size_t countBlocks) {
+    cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(countBlocks);
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(key_set), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
 
-    cudaCheck(cudaMemcpy(dev_block.get(), block, count * sizeof(block_t), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
+
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaHostRegister((void*)blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
+
+    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
+    cudaCheck(cudaGetLastError());
 
     // cudaCheck(cudaGetLastError());
 
-    decrypt << < blockSize, gridSize >> > (*dev_keys, dev_block.get(), count);
+    decrypt <<< blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
 
-    cudaCheck(cudaDeviceSynchronize());
+    cudaCheck(cudaGetLastError());
+    if (blocks != out_blocks)
+        cudaCheck(cudaHostRegister((void*)out_blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
-    cudaCheck(cudaMemcpy(out_block, dev_block.get(), count * sizeof(block_t), cudaMemcpyDeviceToHost));
+    cudaCheck(cudaMemcpyAsync(out_blocks, dev_blocks.get(), countBlocks * sizeof(magmaBlockT), cudaMemcpyDeviceToHost));
+
+    if (blocks != out_blocks)
+        cudaCheck(cudaHostUnregister((void*)blocks));
+
+    cudaCheck(cudaStreamSynchronize(0));
+
+
+    cudaCheck(cudaHostUnregister((void*)out_blocks));
 }
 
 void magma::checkEcnAndDec() {
@@ -270,8 +240,8 @@ void magma::checkEcnAndDec() {
         0xff, 0xfe, 0xfd, 0xfc
     };
 
-    block_t testBlock, resultBlock, validBlock; 
-    key_set testKeys;
+    magmaBlockT testBlock, resultBlock, validBlock; 
+    magmaKeySet testKeys;
     std::copy(testString, testString + 8, testBlock.bytes);
     std::copy(encryptValidString, encryptValidString + 8, validBlock.bytes);
     std::copy(keys, keys + 32, testKeys.keys->bytes);
@@ -293,9 +263,9 @@ void magma::checkEcnAndDec() {
         std::cout << "Decryption algoritm unvalid!" << std::endl;
 }
 
-double magma::testSpeedRandomBytes() {
+double magma::testSpeedUnequalBytes() {
     size_t size = buffSize;
-    std::vector<block_t> data(size);
+    std::vector<magmaBlockT> data(size);
     uint32_t i = 0;
     for (auto& b : data) b.ull = ++i << 32 | ++i;
     encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys, 16);
@@ -304,9 +274,37 @@ double magma::testSpeedRandomBytes() {
 
     encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys, data.size());
     duration time = std::chrono::high_resolution_clock::now() - start;
-    double speed = (size * sizeof(block_t) / 1024.0 / 1024 / 1024) / time.count() * 1000;
-    std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED: " << speed  << " GB/s" << std::endl;
+    double speed = (size * sizeof(magmaBlockT) / 1024.0 / 1024 / 1024) / time.count() * 1000;
+    std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED: " << speed  << " GB/s" << " BLOCK SIZE: " << blockSize << " GRID SIZE: " << gridSize << std::endl;
     return speed;
+}
+
+void magma::searchBestBlockAndGridSize() {
+    cudaDeviceProp prop;
+    cudaError_t(cudaGetDeviceProperties(&prop, 0));
+    size_t size = 1024 * 1024 * 1024 * 2;
+    double max_speed = 0, max_speed_avg = 0;
+    size_t gridSize = 8, bestGridSize;
+    size_t blockSize = 8, bestBlockSize;
+    for (size_t i = blockSize; i <= prop.maxThreadsDim[0]; i *= 2) {
+        for (size_t j = gridSize; j <= prop.maxThreadsDim[1]; j *= 2) {
+            setBlockSize(i);
+            setGridSize(j);
+            for (size_t k = 0; k < 10; ++k) {
+                max_speed_avg += testSpeedUnequalBytes();
+            }
+            max_speed_avg = max_speed_avg / 10.0;
+            if (max_speed < max_speed_avg) {
+                max_speed = max_speed_avg;
+                bestBlockSize = i;
+                bestGridSize = j;
+            }
+            std::cout << "\nAVG SPEED: " << max_speed_avg << " BLOCK SIZE: " << i << " GRID SIZE: " << j << "\n" << std::endl;
+            max_speed_avg = 0;
+        }
+        
+    }
+    std::cout << "Max speed: " << max_speed << "\nBest block size: " << bestBlockSize << "\nBest grid size: " << bestGridSize << std::endl;
 }
 
 

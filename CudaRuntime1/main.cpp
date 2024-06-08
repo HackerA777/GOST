@@ -1,7 +1,19 @@
 #include "magma.cuh"
-#include "cuda_runtime.h"
-#include "device_launch_parameters.h"
+#include "kuznechik.cuh"
 #include <Windows.h>
+
+template<typename typeVector>
+std::string printVector(const typeVector& block) {
+    std::string result;
+    for (int i = sizeof(typeVector) - 1; i >= 0; --i) {
+        uint8_t high, low;
+        high = block.bytes[i] >> 4;
+        low = block.bytes[i] & 0xf;
+        result.push_back((char)(high < 10 ? ('0' + high) : ('A' + high - 10)));
+        result.push_back((char)(low < 10 ? ('0' + low) : ('A' + low - 10)));
+    }
+    return result;
+}
 
 int main()
 {
@@ -34,32 +46,26 @@ int main()
         0xfb, 0xfa, 0xf9, 0xf8,
         0xff, 0xfe, 0xfd, 0xfc
     };
-    //std::cout << "MAX VALUE SIZE_T: " << MAXSIZE_T << "\nsize: " << 1024.0*1024*1024 << std::endl;
-    magma magmaElement(keys, 1024*1024*1024*3.0/sizeof(block_t), 512, 512);
-    // magmaElement.checkEcnAndDec();
-    double max_speed = 0, max_speed_avg = 0;
-    /* size_t size = 1024 * 1024 * 1024 * 3;
-    size_t gridSize = 8, bestGridSize;
-    size_t blockSize = 8, bestBlockSize;
-    for (size_t i = blockSize; i < prop.maxThreadsDim[0]; i *= 2) {
-        for (size_t j = gridSize; j < prop.maxThreadsDim[1]; j *= 2) {
-            magmaElement.setBlockSize(i);
-            magmaElement.setGridSize(j);
-            for (size_t k = 0; k < 10; ++k) {
-                max_speed_avg += magmaElement.testSpeedRandomBytes();
-            }
-            max_speed_avg = max_speed_avg / 10;
-            if (max_speed < max_speed_avg) {
-                max_speed = max_speed_avg;
-                bestBlockSize = i;
-                bestGridSize = j;
-            }
-        }
-    }
-    std::cout << "Max speed: " << max_speed << "\nBest block size: " << bestBlockSize << "\nBest grid size: " << bestGridSize << std::endl;*/
-    /*for (int i = 0; i < 15; ++i)
-        max_speed_avg += magmaElement.testSpeedRandomBytes();
-    std::cout << "Avg speed: " << max_speed_avg / 15.0 << std::endl;*/
-    magmaElement.testSpeedRandomBytes();
+    magma magmaElement(keys, 1024*1024*1024*2.0/sizeof(magmaBlockT), 512, 1024);
+    //magmaElement.checkEcnAndDec();
+    //magmaElement.searchBestBlockAndGridSize();
+
+    uint8_t testKeyBytesKuz[] = { 
+        0xef, 0xcd, 0xab, 0x89, 
+        0x67, 0x45, 0x23, 0x01, 
+        0x10, 0x32, 0x54, 0x76, 
+        0x98, 0xba, 0xdc, 0xfe, 
+        0x77, 0x66, 0x55, 0x44, 
+        0x33, 0x22, 0x11, 0x00, 
+        0xff, 0xee, 0xdd, 0xcc, 
+        0xbb, 0xaa, 0x99, 0x88 };
+
+    kuznechikKeys testKeyKuz(testKeyBytesKuz);
+
+    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*2.0/sizeof(kuznechikByteVector), 512, 1024);
+
+    //kuznechikElement.checkEcnAndDec();
+    kuznechikElement.testSpeedUnequalBytes();
+    //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
 }
