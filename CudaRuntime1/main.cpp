@@ -64,7 +64,7 @@ int main()
 
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*2.0/sizeof(kuznechikByteVector), 512, 512);
 
-    //kuznechikElement.checkEcnAndDec();
+    kuznechikElement.checkEcnAndDec();
     kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
