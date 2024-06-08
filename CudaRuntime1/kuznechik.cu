@@ -79,7 +79,9 @@ __device__ static constexpr uint8_t lVector[16] = { 1, 148, 32, 133, 16, 194, 19
 __device__ uint8_t multiplicationGalua(uint8_t first, uint8_t second) {
 	uint8_t result = 0;
 	uint8_t hiBit;
-	for (int i = 0; i < 8; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 8; i += tcnt) {
 		if (second & 1) {
 			result ^= first;
 		}
@@ -101,7 +103,9 @@ __device__ kuznechikByteVector XOR(const kuznechikByteVector src1, const kuznech
 
 __device__ kuznechikByteVector transformationS(const kuznechikByteVector src) {
 	kuznechikByteVector tmp{};
-	for (size_t i = 0; i < 16; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		tmp.bytes[i] = sTable[src.bytes[i]];
 	}
 	return tmp;
@@ -127,7 +131,9 @@ __device__ kuznechikByteVector transformationR(const kuznechikByteVector src) {
 
 __device__ kuznechikByteVector transformaionL(const kuznechikByteVector& inData) {
 	kuznechikByteVector tmp = inData;
-	for (int i = 0; i < 16; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		tmp = transformationR(tmp);
 	}
 	return tmp;
@@ -146,7 +152,9 @@ __device__  cuda::std::array <kuznechikByteVector, 32> getConstTableKuz() {
 	cuda::std::array <kuznechikByteVector, 32> constTable;
 	kuznechikByteVector numberIter = { kuznechikHalfVector(0), kuznechikHalfVector(0) };
 	numberIter.bytes[0] += 0x01;
-	for (int i = 0; i < 32; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 32; i += tcnt) {
 		kuznechikByteVector result = { 0, 0 };
 		result = transformaionL(numberIter);
 		constTable[i] = result;
@@ -160,7 +168,9 @@ __global__  void getRoundKeys(const kuznechikKeys& mainKey, kuznechikByteVector*
 	uint8_t lo[16];
 	uint8_t hi[16];
 	size_t numberKey = 0;
-	for (int i = 0; i < 16; ++i) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		lo[i] = mainKey.bytes[i];
 		hi[i] = mainKey.bytes[i + 16];
 	}
@@ -169,7 +179,9 @@ __global__  void getRoundKeys(const kuznechikKeys& mainKey, kuznechikByteVector*
 	roundKeysKuznechik[0] = rightPart;
 	roundKeysKuznechik[1] = leftPart;
 	numberKey += 2;
-	for (size_t i = 1; i < 5; i++) {
+	tid = blockDim.x * blockIdx.x + threadIdx.x;
+	tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 5; i += tcnt) {
 		int iter = 0;
 		for (size_t j = 0; j < 8; j++) {
 			kuznechikByteVector tmp2 = leftPart;
@@ -187,7 +199,9 @@ __global__  void getRoundKeys(const kuznechikKeys& mainKey, kuznechikByteVector*
 
 __device__ kuznechikByteVector revTransformationS(const kuznechikByteVector src) {
 	kuznechikByteVector tmp{};
-	for (size_t i = 0; i < 16; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		tmp.bytes[i] = revSTable[src.bytes[i]];
 	}
 	return tmp;
@@ -197,8 +211,9 @@ __device__ kuznechikByteVector revTransformationR(const kuznechikByteVector src)
 {
 	uint8_t a0 = src.bytes[15];
 	kuznechikByteVector internal = { 0, 0 };
-	for (int i = 1; i < 16; i++)
-	{
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		internal.bytes[i] = src.bytes[i - 1];
 		a0 ^= multiplicationGalua(internal.bytes[i], lVector[i]);
 	}
@@ -209,7 +224,9 @@ __device__ kuznechikByteVector revTransformationR(const kuznechikByteVector src)
 __device__ kuznechikByteVector revTransformationL(const kuznechikByteVector& inData)
 {
 	kuznechikByteVector tmp = inData;
-	for (int i = 0; i < 16; i++) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+	for (auto i = tid; i < 16; i += tcnt) {
 		tmp = revTransformationR(tmp);
 	}
 	return tmp;

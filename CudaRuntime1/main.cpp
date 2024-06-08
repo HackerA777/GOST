@@ -62,7 +62,7 @@ int main()
 
     kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
-    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*2.0/sizeof(kuznechikByteVector), 512, 1024);
+    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*2.0/sizeof(kuznechikByteVector), 512, 512);
 
     //kuznechikElement.checkEcnAndDec();
     kuznechikElement.testSpeedUnequalBytes();
