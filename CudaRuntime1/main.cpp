@@ -46,8 +46,9 @@ int main()
         0xfb, 0xfa, 0xf9, 0xf8,
         0xff, 0xfe, 0xfd, 0xfc
     };
-    //magma magmaElement(keys, 1024*1024*1024*2.0/sizeof(magmaBlockT), 512, 1024);
-    //magmaElement.checkEcnAndDec();
+    magma magmaElement(keys, 1024*1024*1024*2.0/sizeof(magmaBlockT), 512, 1024);
+    magmaElement.checkEcnAndDec();
+    magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
     uint8_t testKeyBytesKuz[] = { 
@@ -66,7 +67,7 @@ int main()
 
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
-    // kuznechikElement.checkEcnAndDec();
+    kuznechikElement.checkEcnAndDec();
     kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
