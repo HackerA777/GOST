@@ -94,9 +94,9 @@ __device__ uint8_t multiplicationGalua(uint8_t first, uint8_t second) {
 }
 
 __device__ kuznechikByteVector XOR(const kuznechikByteVector src1, const kuznechikByteVector src2) {
-	kuznechikHalfVector lo = src1.halfsData.lo.halfVector ^ src2.halfsData.lo.halfVector;
-	kuznechikHalfVector hi = src1.halfsData.hi.halfVector ^ src2.halfsData.hi.halfVector;
-	return kuznechikByteVector(lo, hi);
+	//kuznechikHalfVector lo = src1.halfsData.lo.halfVector ^ src2.halfsData.lo.halfVector;
+	//kuznechikHalfVector hi = src1.halfsData.hi.halfVector ^ src2.halfsData.hi.halfVector;
+	return kuznechikByteVector(src1.halfsData.lo.halfVector ^ src2.halfsData.lo.halfVector, src1.halfsData.hi.halfVector ^ src2.halfsData.hi.halfVector);
 }
 
 __device__ kuznechikByteVector transformationS(const kuznechikByteVector src) {
