@@ -20,7 +20,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v142</PlatformToolset>
+    <PlatformToolset>v143</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -88,9 +88,11 @@
   <ItemGroup>
     <CudaCompile Include="kuznechik.cuh" />
     <ClInclude Include="magma.cuh" />
+    <ClInclude Include="magma_v2.cuh" />
     <ClInclude Include="structures.cuh" />
   </ItemGroup>
   <ItemGroup>
+    <CudaCompile Include="magma_v2.cu" />
     <CudaCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

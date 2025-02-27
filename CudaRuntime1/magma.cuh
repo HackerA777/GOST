@@ -17,7 +17,7 @@ private:
 public:
 	//magma() {};
 	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize);
-	
+
 	void checkEcnAndDec();
 	double testSpeedUnequalBytes();
 

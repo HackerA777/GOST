@@ -4,6 +4,7 @@
 #include <iostream>
 #include <cstdint>
 #include <algorithm>
+#include <vector>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -14,13 +15,14 @@ union magmaHalfBlockT {
 
 using magmaKeyT = magmaHalfBlockT;
 
-struct magmaKeySet {
+union magmaKeySet {
     magmaKeyT keys[8];
+    unsigned char bytes[32];
 };
 
-struct magmaRoundKeySet {
-    magmaKeyT keys[8];
-};
+//struct magmaRoundKeySet {
+//    magmaKeyT keys[8];
+//};
 
 union magmaBlockT {
     uint64_t ull;
@@ -92,8 +94,6 @@ inline std::ostream& operator << (std::ostream& s, const kuznechikByteVector& bl
     }
     return s;
 }
-
-
 
 // structures for CUDA
 #define cudaCheck(e) cudaCheck__((e), __FILE__, __LINE__)

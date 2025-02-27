@@ -5,8 +5,6 @@
 #include <random>
 #include <chrono>
 
-
-
 static __device__ constexpr uint8_t table[8][16] = {
     {12, 4, 6, 2, 10, 5, 11, 9, 14, 8, 13, 7, 0, 3, 15, 1},
     {6, 8, 2, 3, 9, 10, 5, 12, 1, 14, 4, 7, 11, 13, 0, 15},
@@ -157,22 +155,23 @@ static __global__ void decrypt(const magmaKeySet& round_key, magmaBlockT* blocks
 
 void magma::encryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaKeySet inputKeys, const size_t countBlocks) {
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
-    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
 
     cudaError_t cudaStatus;
 
     cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
+
     cudaCheck(cudaHostRegister((void*)blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
-
-    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks*sizeof(magmaBlockT), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
     cudaCheck(cudaGetLastError());
-    // cudaCheck(cudaGetLastError());
 
-    encrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
+    encrypt <<< blockSize, gridSize>>> (*dev_keys, dev_blocks.get(), countBlocks);
 
     cudaCheck(cudaGetLastError());
-    if(blocks != out_blocks)
+
+    if (blocks != out_blocks)
         cudaCheck(cudaHostRegister((void*)out_blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
     cudaCheck(cudaMemcpyAsync(out_blocks, dev_blocks.get(), countBlocks * sizeof(magmaBlockT), cudaMemcpyDeviceToHost));
@@ -180,9 +179,8 @@ void magma::encryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaK
     if (blocks != out_blocks)
         cudaCheck(cudaHostUnregister((void*)blocks));
 
-    cudaCheck(cudaStreamSynchronize(0));
+     cudaCheck(cudaStreamSynchronize(0));
 
-    
     cudaCheck(cudaHostUnregister((void*)out_blocks));
 }
 
@@ -203,9 +201,7 @@ void magma::decryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaK
     cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
     cudaCheck(cudaGetLastError());
 
-    // cudaCheck(cudaGetLastError());
-
-    decrypt <<< blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+    decrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
     cudaCheck(cudaGetLastError());
     if (blocks != out_blocks)
