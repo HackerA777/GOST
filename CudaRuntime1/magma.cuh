@@ -15,8 +15,10 @@ private:
 	}
 
 public:
-	//magma() {};
+	magma();
 	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize);
+	void changeKey(const unsigned char* key);
+	magmaKeySet getKeys();
 	
 	void checkEcnAndDec();
 	double testSpeedUnequalBytes();
@@ -27,8 +29,7 @@ public:
 	void encryptCuda(const uint8_t* block, uint8_t* out_block, const magmaKeySet inputKeys, const size_t dataSize);
 	void decryptCuda(const uint8_t* block, uint8_t* out_block, const magmaKeySet inputKeys, const size_t dataSize);
 	void searchBestBlockAndGridSize();
-	~magma() {
-	}
+	~magma() {};
 };
 
 #endif

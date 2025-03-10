@@ -1,6 +1,8 @@
 #include "magma.cuh"
 #include "kuznechik.cuh"
 #include <Windows.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 template<typename typeVector>
 std::string printVector(const typeVector& block) {
@@ -17,6 +19,8 @@ std::string printVector(const typeVector& block) {
 
 int main()
 {
+    SSL_library_init();
+    SSL_load_error_strings();
     // SetConsoleOutputCP(1251);
     // SetConsoleCP(1251);
     SetConsoleOutputCP(65001);
@@ -47,7 +51,7 @@ int main()
         0xff, 0xfe, 0xfd, 0xfc
     };
     magma magmaElement(keys, 1024*1024*1024*2.0/sizeof(magmaBlockT), 512, 1024);
-    //magmaElement.checkEcnAndDec();
+    magmaElement.checkEcnAndDec();
     //magmaElement.searchBestBlockAndGridSize();
 
     uint8_t testKeyBytesKuz[] = { 
@@ -64,8 +68,8 @@ int main()
 
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*2.0/sizeof(kuznechikByteVector), 512, 512);
 
-    kuznechikElement.checkEcnAndDec();
-    kuznechikElement.testSpeedUnequalBytes();
+    //kuznechikElement.checkEcnAndDec();
+    //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
 }

@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="getInfoOfDevice.cu" />
+    <CudaCompile Include="kuznechik.cu" />
+    <CudaCompile Include="magma.cu" />
+    <CudaCompile Include="kuznechik.cuh" />
+    <CudaCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="test_magma.cpp" />
+    <ClCompile Include="magmaContext.cpp">
+      <Filter>magmaContext</Filter>
+    </ClCompile>
+    <ClCompile Include="kuznechikContext.cpp">
+      <Filter>kuznechikContext</Filter>
+    </ClCompile>
+    <ClCompile Include="myProvider.cpp">
+      <Filter>myProvider</Filter>
+    </ClCompile>
+    <ClCompile Include="gParams.cpp" />
+    <ClCompile Include="num.c">
+      <Filter>libprov</Filter>
+    </ClCompile>
+    <ClCompile Include="err.c">
+      <Filter>libprov</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="test_magma.h" />
+    <ClInclude Include="magma.cuh" />
+    <ClInclude Include="structures.cuh" />
+    <ClInclude Include="magmaContext.h">
+      <Filter>magmaContext</Filter>
+    </ClInclude>
+    <ClInclude Include="kuznechikContext.h">
+      <Filter>kuznechikContext</Filter>
+    </ClInclude>
+    <ClInclude Include="myProvider.h">
+      <Filter>myProvider</Filter>
+    </ClInclude>
+    <ClInclude Include="gParams.h" />
+    <ClInclude Include="num.h">
+      <Filter>libprov\include/prov</Filter>
+    </ClInclude>
+    <ClInclude Include="err.h">
+      <Filter>libprov\include/prov</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="magmaContext">
+      <UniqueIdentifier>{e34283be-c054-440a-b7db-ea16079e07f2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="kuznechikContext">
+      <UniqueIdentifier>{cd300eba-ed22-4367-b387-ad0de2cabda7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="myProvider">
+      <UniqueIdentifier>{a61c5d3c-b474-4629-a3db-6f995be305ab}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libprov">
+      <UniqueIdentifier>{0b528732-6772-4680-89ae-dd82cfff9742}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libprov\perl">
+      <UniqueIdentifier>{944936c9-d41a-4c2c-8fcc-b930b97a25b9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libprov\include/prov">
+      <UniqueIdentifier>{3f64be61-b998-4f1e-99ad-bc5fe766c2be}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gen_param_LL.pl">
+      <Filter>libprov\perl</Filter>
+    </None>
+  </ItemGroup>
+</Project>
