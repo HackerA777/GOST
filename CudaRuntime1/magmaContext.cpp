@@ -1,6 +1,22 @@
 #include "magmaContext.h"
 
-static void* magmaNewCtx(void* provCtx) {
+const OSSL_DISPATCH magmaFunctions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))magmaNewCtx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))magmaFreeCtx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))magmaEncryptInit },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))magmaDecryptInit},
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))magmaUpdate },
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))magmaFinal },
+    { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))magmaGetParams },
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))magmaGetTableParams },
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))magmaGetCtxParams },
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))magmaGetTableCtxParams },
+    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))magmaSetCtxParams },
+    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))magmaSetTableCtxParams },
+    { 0, NULL }
+};
+
+void* magmaNewCtx(void* provCtx) {
     struct magmaCtxSt* ctx = new magmaCtxSt;
     if (ctx != nullptr) {
         std::memset(ctx, 0, sizeof(*ctx));
@@ -11,14 +27,14 @@ static void* magmaNewCtx(void* provCtx) {
     return ctx;
 }
 
-static void magmaFreeCtx(void* magmaCtx) {
+void magmaFreeCtx(void* magmaCtx) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     ctx->provCtx = nullptr;
     delete ctx;
 }
 
-static int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyL, 
-                                const unsigned char* iv, size_t ivLen, OSSL_PARAM params[]) {
+int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen, 
+                            const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     if (key != nullptr) {
         delete ctx->key;
@@ -29,7 +45,7 @@ static int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t key
         ctx->buffer = new unsigned char[ivLen];
         std::copy_n(iv, ctx->buffer, ivLen);
 
-        ctx->keyL = keyL;
+        ctx->keyL = keyLen;
         ctx->bufferSize = ivLen;
         ctx->mgm.changeKey(key);
 
@@ -43,8 +59,8 @@ static int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t key
     return 1;
 }
 
-static int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyL,
-    const unsigned char* iv, size_t ivLen, OSSL_PARAM params[]) {
+int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen, 
+                            const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     if (key != nullptr) {
         delete ctx->key;
@@ -55,7 +71,7 @@ static int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t key
         ctx->buffer = new unsigned char[ivLen];
         std::copy_n(iv, ctx->buffer, ivLen);
 
-        ctx->keyL = keyL;
+        ctx->keyL = keyLen;
         ctx->bufferSize = ivLen;
         ctx->mgm.changeKey(key);
 
@@ -69,7 +85,7 @@ static int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t key
     return 1;
 }
 
-static int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize, const unsigned char* in, size_t inL) {
+int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize, const unsigned char* in, size_t inL) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
 
     size_t blockSize = ctx->blockSize;
@@ -96,7 +112,7 @@ static int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t 
 
 }
 
-static int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize) {
+int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     size_t blockSize = ctx->blockSize;
     size_t partialBlockLen = ctx->partialBlockLen;
@@ -110,7 +126,7 @@ static int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t o
     return 1;
 }
 
-static const OSSL_PARAM* magmaGetTableParams(void* provCtx)
+const OSSL_PARAM* magmaGetTableParams(void* provCtx)
 {
     static const OSSL_PARAM table[] =
     {
@@ -124,7 +140,7 @@ static const OSSL_PARAM* magmaGetTableParams(void* provCtx)
 }
 
 
-static int magmaGetParams(OSSL_PARAM params[]) {
+int magmaGetParams(OSSL_PARAM params[]) {
     OSSL_PARAM* p;
     int ok = 1;
 
@@ -144,7 +160,7 @@ static int magmaGetParams(OSSL_PARAM params[]) {
     return ok;
 }
 
-static int magmaGetCtxParams(void* magmaCtx, OSSL_PARAM params[]) {
+int magmaGetCtxParams(void* magmaCtx, OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     int ok = 1;
 
@@ -175,7 +191,7 @@ static int magmaGetCtxParams(void* magmaCtx, OSSL_PARAM params[]) {
     return ok;
 }
 
-static int magmaSetCtxParams(void* magmaCtx, const OSSL_PARAM params[]) {
+int magmaSetCtxParams(void* magmaCtx, const OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     const OSSL_PARAM* p;
 
@@ -194,7 +210,7 @@ static int magmaSetCtxParams(void* magmaCtx, const OSSL_PARAM params[]) {
     return 1;
 }
 
-static const OSSL_PARAM* magmaGetTableCtxParams(void* magmaCtx, void* provCtx) {
+const OSSL_PARAM* magmaGetTableCtxParams(void* magmaCtx, void* provCtx) {
     static const OSSL_PARAM table[] =
     {
         { S_PARAM_blocksize, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
@@ -206,7 +222,7 @@ static const OSSL_PARAM* magmaGetTableCtxParams(void* magmaCtx, void* provCtx) {
     return table;
 }
 
-static const OSSL_PARAM* magmaSetTableCtxParams(void* magmaCtx, void* provCtx) {
+const OSSL_PARAM* magmaSetTableCtxParams(void* magmaCtx, void* provCtx) {
     static const OSSL_PARAM table[] =
     {
         { S_PARAM_blocksize, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },

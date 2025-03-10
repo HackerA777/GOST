@@ -18,6 +18,19 @@ static OSSL_FUNC_provider_query_operation_fn magmaProvOperation; // сам пр�
 static OSSL_FUNC_provider_get_params_fn magmaProvGetParams;
 static OSSL_FUNC_provider_get_reason_strings_fn magmaProvGetReasonStrings;
 
+OSSL_FUNC_cipher_newctx_fn magmaNewCtx;
+OSSL_FUNC_cipher_freectx_fn magmaFreeCtx;
+OSSL_FUNC_cipher_encrypt_init_fn magmaEncryptInit;
+OSSL_FUNC_cipher_decrypt_init_fn magmaDecryptInit;
+OSSL_FUNC_cipher_update_fn magmaUpdate;
+OSSL_FUNC_cipher_final_fn magmaFinal;
+OSSL_FUNC_cipher_get_params_fn magmaGetParams;
+OSSL_FUNC_cipher_gettable_params_fn magmaGetTableParams;
+OSSL_FUNC_cipher_set_ctx_params_fn magmaSetCtxParams;
+OSSL_FUNC_cipher_get_ctx_params_fn magmaGetCtxParams;
+OSSL_FUNC_cipher_settable_ctx_params_fn magmaSetTableCtxParams;
+OSSL_FUNC_cipher_gettable_ctx_params_fn magmaGetTableCtxParams;
+
 struct providerCtxSt;
 
 struct magmaCtxSt { // контекст самого алгоритма
@@ -38,58 +51,32 @@ struct magmaCtxSt { // контекст самого алгоритма
 	size_t gridSize;
 };
 
-static void* magmaNewCtx(void* provCtx);
+void* magmaNewCtx(void* provCtx);
 
-static void magmaFreeCtx(void* magmaCtx);
+void magmaFreeCtx(void* magmaCtx);
 
 //static int magmaOperationInit(void* magmaCtx, const unsigned char* key, size_t keyL, 
 //								const unsigned char* buffer, size_t bufferSize, const OSSL_PARAM* params[]);
-static int magmaEncryptInit(void* magmaCtx, const unsigned char* key,
+
+int magmaEncryptInit(void* magmaCtx, const unsigned char* key,
 	size_t keyLen, const unsigned char* iv,
 	size_t ivLen, const OSSL_PARAM params[]);
-static int magmaDecryptInit(void* magmaCtx, const unsigned char* key,
+int magmaDecryptInit(void* magmaCtx, const unsigned char* key,
 	size_t keyLen, const unsigned char* iv,
 	size_t ivLen, const OSSL_PARAM params[]);
 
-static int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize, const unsigned char* in, size_t inL);
+int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize, const unsigned char* in, size_t inL);
 
-static int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize);
+int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize);
 
-static int magmaGetParams(OSSL_PARAM params[]);
+int magmaGetParams(OSSL_PARAM params[]);
 
-static int magmaGetCtxParams(void* magmaCtx, OSSL_PARAM params[]);
+int magmaGetCtxParams(void* magmaCtx, OSSL_PARAM params[]);
 
-static int magmaSetCtxParams(void* magmaCtx, const OSSL_PARAM params[]);
+int magmaSetCtxParams(void* magmaCtx, const OSSL_PARAM params[]);
 
-static const OSSL_PARAM* magmaGetTableCtxParams(void* magmaCtx, void* provCtx);
+const OSSL_PARAM* magmaGetTableCtxParams(void* magmaCtx, void* provCtx);
 
-static const OSSL_PARAM* magmaSetTableCtxParams(void* magmaCtx, void* provCtx);
+const OSSL_PARAM* magmaSetTableCtxParams(void* magmaCtx, void* provCtx);
 
-static OSSL_FUNC_cipher_newctx_fn magmaNewCtx;
-static OSSL_FUNC_cipher_freectx_fn magmaFreeCtx;
-static OSSL_FUNC_cipher_encrypt_init_fn magmaEncryptInit;
-static OSSL_FUNC_cipher_decrypt_init_fn magmaDecryptInit;
-static OSSL_FUNC_cipher_update_fn magmaUpdate;
-static OSSL_FUNC_cipher_final_fn magmaFinal;
-static OSSL_FUNC_cipher_get_params_fn magmaGetParams;
-static OSSL_FUNC_cipher_gettable_params_fn magmaGetTableParams;
-static OSSL_FUNC_cipher_set_ctx_params_fn magmaSetCtxParams;
-static OSSL_FUNC_cipher_get_ctx_params_fn magmaGetCtxParams;
-static OSSL_FUNC_cipher_settable_ctx_params_fn magmaSetTableCtxParams;
-static OSSL_FUNC_cipher_gettable_ctx_params_fn magmaGetTableCtxParams;
-
-extern const OSSL_DISPATCH magmaFunctions[] = {
-	{ OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))magmaNewCtx },
-	{ OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))magmaFreeCtx },
-	{ OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))magmaEncryptInit },
-	{ OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))magmaDecryptInit },
-	{ OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))magmaUpdate },
-	{ OSSL_FUNC_CIPHER_FINAL, (void (*)(void))magmaFinal },
-	{ OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))magmaGetParams },
-	{ OSSL_FUNC_CIPHER_GETTABLE_PARAMS, (void (*)(void))magmaGetTableParams },
-	{ OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))magmaGetCtxParams },
-	{ OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS, (void (*)(void))magmaGetTableCtxParams },
-	{ OSSL_FUNC_CIPHER_SET_CTX_PARAMS, (void (*)(void))magmaSetCtxParams },
-	{ OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS, (void (*)(void))magmaSetTableCtxParams },
-	{ 0, NULL }
-};
+extern const OSSL_DISPATCH magmaFunctions[];
