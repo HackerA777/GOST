@@ -48,6 +48,8 @@ include(libprov/cmake/provider.cmake)
 
 setup_provider_openssl()
 
+include_directories("${CUDAToolkit_INCLUDE_DIRS}")
+
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/gParams.cpp
                           ${CMAKE_CURRENT_SOURCE_DIR}/gParams.h
                    COMMAND perl ${CMAKE_CURRENT_SOURCE_DIR}/libprov/perl/gen_param_LL.pl
@@ -60,4 +62,4 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/gParams.cpp
 set(gost_source myProvider.cpp gParams.cpp ./magma/magma.cu ./magmaContext/magmaContext.cpp 
         ./kuznechik/kuznechik.cu ./kuznechikContext/kuznechikContext.cpp)
 
-build_provider(gost "${gost_source}" libprov)
+build_provider(gost_provider "${gost_source}" libprov)

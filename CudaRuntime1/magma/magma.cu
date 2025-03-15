@@ -282,7 +282,7 @@ double magma::testSpeedUnequalBytes() {
 void magma::searchBestBlockAndGridSize() {
     cudaDeviceProp prop;
     cudaError_t(cudaGetDeviceProperties(&prop, 0));
-    size_t size = 1024 * 1024 * 1024 * 2;
+    size_t size = 1024.0 * 1024 * 1024 * 2;
     double max_speed = 0, max_speed_avg = 0;
     size_t gridSize = 8, bestGridSize;
     size_t blockSize = 8, bestBlockSize;
