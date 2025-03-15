@@ -33,6 +33,8 @@
 #OpenSSL provider
 cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
+set(BUILD_SHARED_LIBS ON)
+
 project(gost_provider CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -42,8 +44,6 @@ add_compile_definitions(AUTHOR="@HackerA777")
 
 find_package(CUDAToolkit REQUIRED)
 link_libraries(${PROJECT_NAME} CUDA::cudart) 
-
-#add_compile_options(-magma -kuz)
 
 add_subdirectory(libprov)
 include(libprov/cmake/provider.cmake)
