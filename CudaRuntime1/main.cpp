@@ -1,6 +1,5 @@
-#include "magma.cuh"
-#include "kuznechik.cuh"
-#include <Windows.h>
+#include "./magma/magma.cuh"
+#include "./kuznechik/kuznechik.cuh"
 
 template<typename typeVector>
 std::string printVector(const typeVector& block) {
@@ -17,9 +16,6 @@ std::string printVector(const typeVector& block) {
 
 int main()
 {
-    // SetConsoleOutputCP(1251);
-    // SetConsoleCP(1251);
-    SetConsoleOutputCP(65001);
     /*cudaDeviceProp prop;
     int count;
     cudaError_t(cudaGetDeviceCount(&count));
@@ -48,7 +44,7 @@ int main()
     };
     magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
     magmaElement.checkEcnAndDec();
-    magmaElement.testSpeedUnequalBytes();
+    //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
     uint8_t testKeyBytesKuz[] = { 
@@ -63,12 +59,12 @@ int main()
 
     kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
-    std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5;
-
+    // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 ;
+    std::cout << "Kuznechik" << std::endl;
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
     kuznechikElement.checkEcnAndDec();
-    kuznechikElement.testSpeedUnequalBytes();
+    //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
 }

@@ -1,0 +1,3 @@
+/home/user/Desktop/GOST/GOST/CudaRuntime1/build/build/CMakeFiles/GOST.dir
+/home/user/Desktop/GOST/GOST/CudaRuntime1/build/build/CMakeFiles/edit_cache.dir
+/home/user/Desktop/GOST/GOST/CudaRuntime1/build/build/CMakeFiles/rebuild_cache.dir

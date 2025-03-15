@@ -1,7 +1,7 @@
 #pragma once
 #ifndef H_MAGMA
 #define H_MAGMA
-#include "structures.cuh"
+#include "../structures/structures.cuh"
 
 class magma {
 private:
@@ -15,8 +15,11 @@ private:
 	}
 
 public:
-	//magma() {};
+	magma();
 	magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize);
+
+	void changeKey(const unsigned char* key);
+	magmaKeySet getKeys();
 	
 	void checkEcnAndDec();
 	double testSpeedUnequalBytes();

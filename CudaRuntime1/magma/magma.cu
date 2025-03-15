@@ -316,9 +316,30 @@ void magma::setBlockSize(const size_t newBlockSize) {
     blockSize = newBlockSize;
 }
 
+magma::magma() {
+    const unsigned char keys[32] = {
+        0xcc, 0xdd, 0xee, 0xff,
+        0x88, 0x99, 0xaa, 0xbb,
+        0x44, 0x55, 0x66, 0x77,
+        0x00, 0x11, 0x22, 0x33,
+        0xf3, 0xf2, 0xf1, 0xf0,
+        0xf7, 0xf6, 0xf5, 0xf4,
+        0xfb, 0xfa, 0xf9, 0xf8,
+        0xff, 0xfe, 0xfd, 0xfc
+    };
+    copyKeys(keys);
+    this->buffSize = buffSize;
+    this->blockSize = 512;
+    this->gridSize = 512;
+}
+
 magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned int gridSize, const unsigned int blockSize ) {
     copyKeys(keys);
     this->buffSize = buffSize;
     this->blockSize = blockSize;
     this->gridSize = gridSize;
+}
+
+void magma::changeKey(const unsigned char* key) {
+    this->copyKeys(key);
 }
