@@ -36,6 +36,9 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 project(gost_provider CXX CUDA)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+
+add_compile_definitions(AUTHOR="@HackerA777") 
 
 find_package(CUDAToolkit REQUIRED)
 link_libraries(${PROJECT_NAME} CUDA::cudart) 
@@ -44,6 +47,7 @@ link_libraries(${PROJECT_NAME} CUDA::cudart)
 
 add_subdirectory(libprov)
 include(libprov/cmake/provider.cmake)
+
 setup_provider_openssl()
 
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/gParams.cpp
@@ -58,7 +62,4 @@ add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/gParams.cpp
 set(gost_source myProvider.cpp gParams.cpp ./magma/magma.cu ./magmaContext/magmaContext.cpp 
         ./kuznechik/kuznechik.cu ./kuznechikContext/kuznechikContext.cpp)
 
-set(gost_libs libprov)
-build_provider(gost "${gost_source}" "${gost_libs}")
-
-#target_link_libraries(${PROJECT_NAME} CUDA::cudart) 
+build_provider(gost "${gost_source}" libprov)
