@@ -6,8 +6,6 @@ cmake_policy(SET
 )
 project(libprov LANGUAGES C)
 
-find_package(CUDAToolkit REQUIRED)
-
 set(CMAKE_C_STANDARD 99)
 
 if (NOT OPENSSL_FOUND)

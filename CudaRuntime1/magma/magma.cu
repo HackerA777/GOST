@@ -343,3 +343,7 @@ magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned
 void magma::changeKey(const unsigned char* key) {
     this->copyKeys(key);
 }
+
+magmaKeySet magma::getKeys(){
+    return this->keys;
+}

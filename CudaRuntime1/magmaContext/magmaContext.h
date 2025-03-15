@@ -1,4 +1,12 @@
 #pragma once
+
+#include "../gParams.h"
+
+extern "C" {
+#include "../libprov/include/prov/num.h"
+#include "../libprov/include/prov/err.h"
+}
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/params.h>
@@ -8,10 +16,6 @@
 #include <vector>
 #include <cstring>
 #include <cstddef>
-
-#include "../gParams.h"
-#include "../libprov/include/prov/num.h"
-#include "../libprov/include/prov/err.h"
 
 #define DEFAULT_KEYLENGTH 32    // bytes
 #define BLOCKSIZE 8             // bytes

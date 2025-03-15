@@ -1,4 +1,10 @@
 #pragma once
+
+extern "C" {
+#include "./libprov/include/prov/err.h"
+#include "./libprov/include/prov/num.h"
+}
+
 #include <iostream>
 #include <cassert>
 
@@ -8,8 +14,6 @@
 #include <openssl/opensslconf.h>
 #include <openssl/core_names.h>
 
-#include "./libprov/include/prov/err.h"
-#include "./libprov/include/prov/num.h"
 #include "./magmaContext/magmaContext.h"
 #include "./magma/magma.cuh"
 
