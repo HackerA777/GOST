@@ -42,7 +42,8 @@ int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         ctx->key = new unsigned char[ctx->keyL];
         std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 4096;
+        //ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 1024;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 
@@ -72,7 +73,8 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         ctx->key = new unsigned char[ctx->keyL];
         std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 4096;
+        //ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 1024;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 

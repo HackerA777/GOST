@@ -61,8 +61,10 @@ int main(){
     outputFile.write((char*)result.data(), result.size());
     outputFile.close();
 
+    CtxFactory D = CtxFactory("gost_provider", "magma");
+
     buffer = readFile("./testFiles/outputEnc/testSP1024.txt.enc");
-    OsslCtx d = F.decryptInit(key);
+    OsslCtx d = D.decryptInit(key);
 
     d.decrypt((unsigned char *)buffer.data(), (unsigned char *)result.data(), result.size());
 
