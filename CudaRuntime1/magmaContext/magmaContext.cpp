@@ -43,7 +43,7 @@ int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         std::copy_n(key, ctx->keyL, ctx->key);
 
         //ctx->bufferSize = 4096;
-        ctx->bufferSize = 1024 * 1024;
+        ctx->bufferSize = 1024 * 64;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 
@@ -74,7 +74,7 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         std::copy_n(key, ctx->keyL, ctx->key);
 
         //ctx->bufferSize = 4096;
-        ctx->bufferSize = 1024 * 1024;
+        ctx->bufferSize = 1024 * 64;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 
@@ -99,13 +99,12 @@ int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize
 
     size_t blockSize = ctx->blockSize;
     size_t processed = 0;
-    unsigned char result[ctx->bufferSize];
+    unsigned char* result = new unsigned char [ctx->bufferSize];
 
     ctx->partialBlockLen += inL;
     if (ctx->enc){
         for (size_t i = 0; i < inL / ctx->bufferSize; ++i)
         { 
-            std::cout << "inL: " << inL << " bufferSize: " << ctx->bufferSize << std::endl;
             std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
             
             ctx->mgm.encryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE_MGM);
@@ -138,7 +137,7 @@ int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize)
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     size_t blockSize = ctx->blockSize;
     size_t partialBlockLen = ctx->partialBlockLen;
-    unsigned char result[ctx->bufferSize];
+    unsigned char* result = new unsigned char [ctx->bufferSize];
     size_t current_blocks = partialBlockLen / BLOCKSIZE_MGM;
 
     if(ctx->enc){

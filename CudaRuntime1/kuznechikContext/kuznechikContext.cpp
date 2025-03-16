@@ -42,7 +42,8 @@ int kuznechikEncryptInit(void* kuznechikCtx, const unsigned char* key, size_t ke
         ctx->key = new unsigned char[ctx->keyLen];
         std::copy_n(key, ctx->keyLen, ctx->key);
 
-        ctx->bufferSize = 4096;
+        //ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 32;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 
@@ -72,7 +73,8 @@ int kuznechikDecryptInit(void* kuznechikCtx, const unsigned char* key, size_t ke
         ctx->key = new unsigned char[ctx->keyLen];
         //std::copy_n(key, ctx->keyLen, ctx->key);
 
-        ctx->bufferSize = 4096;
+        //ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 32;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
 
