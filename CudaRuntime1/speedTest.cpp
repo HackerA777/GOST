@@ -5,7 +5,6 @@
 #include <fstream>
 
 std::vector<uint8_t> readFile(const std::string path){
-    //const std::string inputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/input/test8"; 
     std::cout << "Opening file: " << path << std::endl;
     std::ifstream inputFile(path, std::ios::binary);
     if (!inputFile){
@@ -31,7 +30,7 @@ std::vector<uint8_t> readFile(const std::string path){
 
 int main(){
     CtxFactory F = CtxFactory("gost_provider", "magma");
-    std::vector<uint8_t> buffer = readFile("/home/Documents/GOST/CudaRuntime1/testFiles/input/test1024");
+    std::vector<uint8_t> buffer = readFile("./testFiles/input/test1024");
     std::vector<uint8_t> result;
 
     unsigned char key[32] = {
@@ -61,4 +60,19 @@ int main(){
 
     outputFile.write((char*)result.data(), result.size());
     outputFile.close();
+
+    buffer = readFile("./testFiles/outputEnc/testSP1024.txt.enc");
+    OsslCtx d = F.decryptInit(key);
+
+    d.decrypt((unsigned char *)buffer.data(), (unsigned char *)result.data(), result.size());
+
+    std::string outputPathDec = "./testFiles/outputDec/testSP1024.txt";
+    std::ofstream outputFileDec(outputPathDec, std::ios::binary);
+    if (!outputFileDec){
+        std::cerr << "Error opening file: " << outputPathDec << std::endl;
+        return -1;
+    }
+
+    outputFileDec.write((char*)result.data(), result.size());
+    outputFileDec.close();
 }

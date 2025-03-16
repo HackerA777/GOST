@@ -42,23 +42,19 @@ int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         ctx->key = new unsigned char[ctx->keyL];
         std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 1024 * 1024;
+        ctx->bufferSize = 4096;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
-        //std::copy_n(iv, 8, ctx->buffer);
 
         delete ctx->buffer2;
         ctx->buffer2 = new unsigned char[ctx->bufferSize];
-        //std::copy_n(iv, 8, ctx->buffer2);
 
         ctx->keyL = keyLen;
-        //std::cout << "key: " << key << " keyLen: " << keyLen << std::endl;
         ctx->mgm.changeKey(key);
-        // std::cout << "key after change: " << mgm.g
 
-        ctx->cudaGridSize = 512;
+        ctx->cudaGridSize = 1024;
         ctx->mgm.setGridSize(ctx->cudaGridSize);
-        ctx->cudaBlockSize = 512;
+        ctx->cudaBlockSize = 1024;
         ctx->mgm.setBlockSize(ctx->cudaBlockSize);
 
         ctx->enc = true;
@@ -76,10 +72,9 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         ctx->key = new unsigned char[ctx->keyL];
         std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 1024 * 1024;
+        ctx->bufferSize = 4096;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
-        //std::copy_n(iv, ivLen, ctx->buffer);
 
         delete ctx->buffer2;
         ctx->buffer2 = new unsigned char[ctx->bufferSize];
@@ -87,9 +82,9 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
         ctx->keyL = keyLen;
         ctx->mgm.changeKey(key);
 
-        ctx->cudaGridSize = 512;
+        ctx->cudaGridSize = 1024;
         ctx->mgm.setGridSize(ctx->cudaGridSize);
-        ctx->cudaBlockSize = 512;
+        ctx->cudaBlockSize = 1024;
         ctx->mgm.setBlockSize(ctx->cudaBlockSize);
 
         ctx->enc = false;
@@ -100,81 +95,50 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
 int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize, const unsigned char* in, size_t inL) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
 
-    //if (ctx->bufferSize > inL){
-    //    ctx->bufferSize = inL;
-    //}
-
     size_t blockSize = ctx->blockSize;
     size_t processed = 0;
-    //size_t* partialBlockLen = &(ctx->partialBlockLen);
-    //std::cout << "result: " << ctx->bufferSize << " size: " << std::endl;
     unsigned char result[ctx->bufferSize];
-    //std::cout << "result: " << *result << " size: " << std::endl;
 
-    //std::cout << "inL: " << inL << std::endl;
-
-    //*partialBlockLen += inL;
     ctx->partialBlockLen += inL;
     if (ctx->enc){
         for (size_t i = 0; i < inL / ctx->bufferSize; ++i)
-        {
-            //std::cout << "1 i: " << i << std::endl;
+        { 
+            std::cout << "inL: " << inL << " bufferSize: " << ctx->bufferSize << std::endl;
             std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
-            //std::cout << "Buffer: " << ctx->buffer << " size: " << ctx->bufferSize << std::endl;
             
             ctx->mgm.encryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE_MGM);
             
-            //std::cout << "Buffer after encrypt: " << result << std::endl;
-            //ctx->ivu += 0x04;
             std::copy_n(result, ctx->bufferSize, out + i * ctx->bufferSize);
             processed += ctx->bufferSize;
-            //std::cout << "partialBlockLen " << ctx->partialBlockLen << std::endl;
             ctx->partialBlockLen -= ctx->bufferSize;
-            //std::cout << "partialBlockLen after " << ctx->partialBlockLen << std::endl;
             ctx->last += ctx->bufferSize;
         }
-        //std::cout << out << std::endl;
     }
     else{
-        //std::cout << "dec" << std::endl;
         for (size_t i = 0; i < inL / ctx->bufferSize; ++i)
         {
-            //std::cout << "1 i: " << i << std::endl;
             std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
-            //std::cout << "Buffer: " << ctx->buffer << " size: " << ctx->bufferSize << std::endl;
             
             ctx->mgm.decryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE_MGM);
             
-            //std::cout << "Buffer after encrypt: " << result << std::endl;
-            //ctx->ivu += 0x04;
             std::copy_n(result, ctx->bufferSize, out + i * ctx->bufferSize);
             processed += ctx->bufferSize;
-            //std::cout << "partialBlockLen " << ctx->partialBlockLen << std::endl;
             ctx->partialBlockLen -= ctx->bufferSize;
-            //std::cout << "partialBlockLen after " << ctx->partialBlockLen << std::endl;
             ctx->last += ctx->bufferSize;
         }
     }
-    //std::cout << "line 155" << std::endl;
     std::copy_n(in + processed, inL % ctx->bufferSize, ctx->buffer2);
     *outL = processed;
-    //std::cout << "2: " << std::endl;
     return 1;
 }
 
 int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize) {
-    //std::cout << "FINAL: " << std::endl;
-    //size_t bufferSize = 8;
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     size_t blockSize = ctx->blockSize;
     size_t partialBlockLen = ctx->partialBlockLen;
     unsigned char result[ctx->bufferSize];
     size_t current_blocks = partialBlockLen / BLOCKSIZE_MGM;
-    
-    //std::cout << "partialBlockLen: " << partialBlockLen << std::endl;
 
-    //ctx->mgm.encryptCuda(ctx->buffer2, result, ctx->ivu);
-    //ctx->ivu += 0x04;
     if(ctx->enc){
         if(partialBlockLen % BLOCKSIZE_MGM != 0){
             for(size_t i = partialBlockLen; i < partialBlockLen + BLOCKSIZE_MGM * 2; ++i){
@@ -188,28 +152,21 @@ int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize)
             }
             current_blocks++;
         } 
+
         ctx->mgm.encryptCuda((uint8_t*)ctx->buffer2, (uint8_t*)result, ctx->mgm.getKeys(), current_blocks);
+
         std::copy_n(result, current_blocks * BLOCKSIZE_MGM, out);
-        //std::cout  << "current_blocks" << current_blocks * BLOCKSIZE_MGM << std::endl;
         *outL = current_blocks * BLOCKSIZE_MGM;
     }
     else{
-        //std::cout << "line 207" << std::endl;
+        
         ctx->mgm.decryptCuda((uint8_t*)ctx->buffer2, (uint8_t*)result, ctx->mgm.getKeys(), current_blocks);
-
-        //std::cout << "line 210" << std::endl;
 
         size_t deleteBytes = result[current_blocks * BLOCKSIZE_MGM - 1];
 
         std::copy_n(result, current_blocks * BLOCKSIZE_MGM - deleteBytes, out);
-        //std::cout << "line 215" << std::endl;
-        //std::cout << "deleteBytes: " << deleteBytes << std::endl;
         *outL = current_blocks * BLOCKSIZE_MGM - deleteBytes;
     }
-    //std::cout << "FINAL AFTER ENCRYPT: " << std::endl;
-    //std::copy_n(result, current_blocks * BLOCKSIZE_MGM, out);
-    //std::cout << "FINAL AFTER COPY: " << partialBlockLen << std::endl;
-    //*outL = current_blocks * BLOCKSIZE_MGM;
 
     return 1;
 }

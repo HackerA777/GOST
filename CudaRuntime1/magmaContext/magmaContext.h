@@ -50,9 +50,7 @@ struct magmaCtxSt { // контекст самого алгоритма
 	unsigned char* key; // ключ шифрования
 	unsigned char* buffer; // данные для шифрования/дешифрования
 	size_t blockSize; // размер одного шифруемого блока
-	//uint32_t bufferUint; // данные представленные в виде uint32
 	unsigned char* buffer2;    // Внутренний буффер контекста алгоритма, содержащий данные для операций.
-	//size_t addedBytesForBuffer; // количество дополненных байт до кратности блока
 	size_t partialBlockLen; // число, описывающее фактический размер последнего необработанного блкоа данных
 	magma mgm;	// класс МАГМА (конструктор по умолчанию)
 	bool enc; // 0 = decrypt, 1 = encrypt
@@ -64,9 +62,6 @@ struct magmaCtxSt { // контекст самого алгоритма
 void* magmaNewCtx(void* provCtx);
 
 void magmaFreeCtx(void* magmaCtx);
-
-//static int magmaOperationInit(void* magmaCtx, const unsigned char* key, size_t keyL, 
-//								const unsigned char* buffer, size_t bufferSize, const OSSL_PARAM* params[]);
 
 int magmaEncryptInit(void* magmaCtx, const unsigned char* key,
 	size_t keyLen, const unsigned char* iv,

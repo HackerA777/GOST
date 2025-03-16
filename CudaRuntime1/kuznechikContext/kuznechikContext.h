@@ -39,8 +39,6 @@ OSSL_FUNC_cipher_get_ctx_params_fn kuznechikGetCtxParams;
 OSSL_FUNC_cipher_settable_ctx_params_fn kuznechikSetTableCtxParams;
 OSSL_FUNC_cipher_gettable_ctx_params_fn kuznechikGetTableCtxParams;
 
-///struct providerCtxSt;
-
 struct kuznechikCtxSt {
     struct providerCtxSt* provCtx;
 
@@ -50,8 +48,7 @@ struct kuznechikCtxSt {
     unsigned char* key;
     unsigned char* buffer;
     size_t blockSize;
-
-    //std::vector<kuznechikByteVector> buffer2;
+    
     unsigned char* buffer2;
     size_t addedBytesForBuffer;
     size_t partialBlockLen;
