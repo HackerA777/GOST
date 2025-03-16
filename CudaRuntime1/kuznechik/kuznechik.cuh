@@ -7,6 +7,7 @@
 
 class kuznechik {
 private:
+    kuznechikKeys keys;
     kuznechikByteVector roundKeysKuznechik[10];
     size_t blockSize, gridSize, buffSize;
 public:
@@ -15,7 +16,7 @@ public:
     void processData(kuznechikByteVector* src, kuznechikByteVector* dest, const size_t countBlocks, bool enc)  const;
 
     void changeKey(const unsigned char* key);
-    kuznechikKeys getKyes();
+    kuznechikKeys getKeys();
 
     void setBlockSize(const size_t newBlockSize);
     void setGridSize(const size_t newGridSize);

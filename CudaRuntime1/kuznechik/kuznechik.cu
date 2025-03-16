@@ -364,6 +364,7 @@ void kuznechik::setBlockSize(const size_t newBlockSize) {
 }
 
 kuznechik::kuznechik(const kuznechikKeys& mainKey, const size_t buffSize, const size_t blockSize, const size_t gridSize) {
+	this->keys = mainKey;
 	this->buffSize = buffSize;
 	this->blockSize = blockSize;
 	this->gridSize = gridSize;
@@ -372,7 +373,8 @@ kuznechik::kuznechik(const kuznechikKeys& mainKey, const size_t buffSize, const 
 	cuda_ptr<kuznechikByteVector> dev_res_keys = cuda_alloc<kuznechikByteVector>(10);
 	cudaError_t cudaStatus;
 
-	cudaCheck(cudaMemcpy(dev_keys.get(), mainKey.bytes, sizeof(kuznechikKeys), cudaMemcpyHostToDevice));
+	//cudaCheck(cudaMemcpy(dev_keys.get(), mainKey.bytes, sizeof(kuznechikKeys), cudaMemcpyHostToDevice));
+	cudaCheck(cudaMemcpy(dev_keys.get(), this->keys.bytes, sizeof(kuznechikKeys), cudaMemcpyHostToDevice));
 	cudaCheck(cudaMemcpy(dev_res_keys.get(), roundKeysKuznechik, sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
 	getRoundKeys <<<blockSize, gridSize>>> (*dev_keys, dev_res_keys.get());
@@ -396,11 +398,17 @@ kuznechik::kuznechik(){
         0xff, 0xee, 0xdd, 0xcc, 
         0xbb, 0xaa, 0x99, 0x88 
 	};
-
-    //kuznechikKeys testKeyKuz(testKeyBytesKuz);
-	//this->roundKeysKuznechik = testKeyKuz;
 	
 	this->buffSize = 32;
 	this->gridSize = 512;
 	this->blockSize = 512;
+}
+
+void kuznechik::changeKey(const unsigned char* key){
+	kuznechikKeys newKeys((uint8_t *)key);
+	this->keys = newKeys;
+}
+
+kuznechikKeys kuznechik::getKeys(){
+	return this->keys;
 }

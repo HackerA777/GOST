@@ -1,8 +1,7 @@
-#include "gParams.h"
-
-int gostParamsParse(const char* key)
+#include "/home/user/Documents/GOST/CudaRuntime1/gParams.h"
+int gostParamsParse(const char *key)
 {
-    const char* p = key;
+    const char *p = key;
     switch (*p++) {
     case 'a':
     case 'A':

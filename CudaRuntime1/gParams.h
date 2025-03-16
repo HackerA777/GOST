@@ -1,4 +1,3 @@
-#pragma once
 #define S_PARAM_author "author"
 #define V_PARAM_author 1
 #define S_PARAM_blocksize "blocksize"
@@ -10,4 +9,4 @@
 #define S_PARAM_version "version"
 #define V_PARAM_version 5
 
-int gostParamsParse(const char* key);
+int gostParamsParse(const char *key);

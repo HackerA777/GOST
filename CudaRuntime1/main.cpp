@@ -47,7 +47,7 @@ int main()
     magmaElement.checkEcnAndDec();
 
     const std::string inputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/input/test8"; 
-    const std::string outputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/output/test8"; 
+    const std::string outputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/outputDec/testK8"; 
     std::cout << "Opening file: " << inputPath << std::endl;
     std::ifstream inputFile(inputPath, std::ios::binary);
     if (!inputFile){
@@ -72,43 +72,19 @@ int main()
 
     inputFile.close();
 
-    //std::cout << "input buffer: " << std::endl;
-    //for(size_t i = 0; i < inputFileSize; ++i){
-    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferIn[i]) << std::endl;
-    //}
+    std::cout << "input buffer: " << std::endl;
+    for(size_t i = 0; i < inputFileSize; ++i){
+        std::cout << "Byte " << i << ": " << static_cast<int>(bufferIn[i]) << std::endl;
+    }
 
     std::cout << (uint8_t*)bufferIn.data() << std::endl;
 
-    //std::cout << "Kyes: " << magmaElement.getKeys().keys < std::endl;
-    magmaElement.encryptCuda(bufferIn.data(), bufferOut.data(), magmaElement.getKeys(), bufferIn.size() / 8);
-
-    //std::cout << "output buffer: " << std::endl;
-    //for(size_t i = 0; i < inputFileSize; ++i){
-    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferOut[i]) << std::endl;
-    //}
-
-    //magmaElement.decryptCuda(bufferOut.data(), bufferOut.data(), magmaElement.getKeys(), bufferIn.size() / 8);
-
-    //std::cout << "output buffer: " << std::endl;
-    //for(size_t i = 0; i < inputFileSize; ++i){
-    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferOut[i]) << std::endl;
-    //}
-
-    std::cout << "Opening file: " << outputPath << std::endl;
-    std::ofstream outputFile(outputPath, std::ios::binary);
-    if (!outputFile){
-        std::cerr << "Error opening file: " << outputPath << std::endl;
-        return -1;
-    }
-
-    outputFile.write((char*)bufferOut.data(), bufferOut.size());
-    outputFile.close();
-    std::cout << "Output data written to file: " << outputPath << " (" << bufferOut.size() << " bytes)" << std::endl;
+    // magmaElement.encryptCuda(bufferIn.data(), bufferOut.data(), magmaElement.getKeys(), bufferIn.size() / 8);  
 
     //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
-    uint8_t testKeyBytesKuz[] = { 
+    const unsigned char testKeyBytesKuz[] = { 
         0xef, 0xcd, 0xab, 0x89, 
         0x67, 0x45, 0x23, 0x01, 
         0x10, 0x32, 0x54, 0x76, 
@@ -118,14 +94,48 @@ int main()
         0xff, 0xee, 0xdd, 0xcc, 
         0xbb, 0xaa, 0x99, 0x88 };
 
-    kuznechikKeys testKeyKuz(testKeyBytesKuz);
+    kuznechikKeys testKeyKuz((uint8_t*)testKeyBytesKuz);
 
     // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 ;
     std::cout << "Kuznechik" << std::endl;
-    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
-
+    //kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
+    kuznechik kuznechikElement(testKeyKuz, bufferIn.size(), 512, 1024);
     kuznechikElement.checkEcnAndDec();
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
+
+    kuznechikByteVector inputK(bufferIn.data());
+    kuznechikByteVector outputK(bufferOut.data());
+
+    std::cout << "input: " << inputK << std::endl;
+
+    kuznechikElement.processData(&inputK, &outputK, 1, true);
+
+    std::cout << "output buffer: " << std::endl;
+    //for(size_t i = 0; i < inputFileSize; ++i){
+    //    std::cout << "Byte " << i << ": " << static_cast<int>(outputK[i]) << std::endl;
+    //}
+    std::cout << "encrypt: " << outputK << std::endl;
+
+    kuznechikElement.processData(&outputK, &outputK, 1, false);
+    
+    std::cout << "output buffer: " << std::endl;
+    //for(size_t i = 0; i < inputFileSize; ++i){
+    //    std::cout << "Byte " << i << ": " << static_cast<int>(outputK[i]) << std::endl;
+    //}
+
+    std::cout << "decrypt: " << outputK << std::endl;
+
+    std::cout << "Opening file: " << outputPath << std::endl;
+    std::ofstream outputFile(outputPath, std::ios::binary);
+    if (!outputFile){
+        std::cerr << "Error opening file: " << outputPath << std::endl;
+        return -1;
+    }
+
+    outputFile.write((char*)outputK.bytes, bufferOut.size());
+    outputFile.close();
+    std::cout << "Output data written to file: " << outputPath << " (" << bufferOut.size() << " bytes)" << std::endl;
+
     return 0;
 }

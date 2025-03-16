@@ -20,7 +20,7 @@ extern "C" {
 #include "../myProvider.h"
 
 #define DEFAULT_KEYLENGTH 32    // bytes
-#define BLOCKSIZE 8             // bytes
+#define BLOCKSIZE_MGM 8             // bytes
 
 
 static OSSL_FUNC_provider_query_operation_fn magmaProvOperation; // сам провайдер
@@ -52,7 +52,7 @@ struct magmaCtxSt { // контекст самого алгоритма
 	size_t blockSize; // размер одного шифруемого блока
 	//uint32_t bufferUint; // данные представленные в виде uint32
 	unsigned char* buffer2;    // Внутренний буффер контекста алгоритма, содержащий данные для операций.
-	size_t addedBytesForBuffer; // количество дополненных байт до кратности блока
+	//size_t addedBytesForBuffer; // количество дополненных байт до кратности блока
 	size_t partialBlockLen; // число, описывающее фактический размер последнего необработанного блкоа данных
 	magma mgm;	// класс МАГМА (конструктор по умолчанию)
 	bool enc; // 0 = decrypt, 1 = encrypt

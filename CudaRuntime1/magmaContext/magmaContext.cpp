@@ -22,7 +22,7 @@ void* magmaNewCtx(void* provCtx) {
         std::memset(ctx, 0, sizeof(*ctx));
         ctx->provCtx = (providerCtxSt*)provCtx;
         ctx->keyL = DEFAULT_KEYLENGTH;
-        ctx->blockSize = BLOCKSIZE;
+        ctx->blockSize = BLOCKSIZE_MGM;
     }
     return ctx;
 }
@@ -37,12 +37,12 @@ int magmaEncryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
                             const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     if (key != nullptr) {
-        ctx->blockSize = BLOCKSIZE;
+        ctx->blockSize = BLOCKSIZE_MGM;
         delete ctx->key;
         ctx->key = new unsigned char[ctx->keyL];
         std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 1024;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
         //std::copy_n(iv, 8, ctx->buffer);
@@ -70,13 +70,13 @@ int magmaDecryptInit(void* magmaCtx, const unsigned char* key, size_t keyLen,
                             const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct magmaCtxSt* ctx = (magmaCtxSt*)magmaCtx;
     if (key != nullptr) {
-        ctx->blockSize = BLOCKSIZE;
+        ctx->blockSize = BLOCKSIZE_MGM;
 
         delete ctx->key;
         ctx->key = new unsigned char[ctx->keyL];
-        //std::copy_n(key, ctx->keyL, ctx->key);
+        std::copy_n(key, ctx->keyL, ctx->key);
 
-        ctx->bufferSize = 4096;
+        ctx->bufferSize = 1024 * 1024;
         delete ctx->buffer;
         ctx->buffer = new unsigned char[ctx->bufferSize];
         //std::copy_n(iv, ivLen, ctx->buffer);
@@ -122,7 +122,7 @@ int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize
             std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
             //std::cout << "Buffer: " << ctx->buffer << " size: " << ctx->bufferSize << std::endl;
             
-            ctx->mgm.encryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE);
+            ctx->mgm.encryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE_MGM);
             
             //std::cout << "Buffer after encrypt: " << result << std::endl;
             //ctx->ivu += 0x04;
@@ -143,7 +143,7 @@ int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize
             std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
             //std::cout << "Buffer: " << ctx->buffer << " size: " << ctx->bufferSize << std::endl;
             
-            ctx->mgm.decryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE);
+            ctx->mgm.decryptCuda((uint8_t*)ctx->buffer, (uint8_t*)result, ctx->mgm.getKeys(), ctx->bufferSize / BLOCKSIZE_MGM);
             
             //std::cout << "Buffer after encrypt: " << result << std::endl;
             //ctx->ivu += 0x04;
@@ -155,25 +155,11 @@ int magmaUpdate(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize
             ctx->last += ctx->bufferSize;
         }
     }
-    std::cout << "line 155" << std::endl;
+    //std::cout << "line 155" << std::endl;
     std::copy_n(in + processed, inL % ctx->bufferSize, ctx->buffer2);
     *outL = processed;
-    std::cout << "2: " << std::endl;
+    //std::cout << "2: " << std::endl;
     return 1;
-}
-
-unsigned char* paddingPKCS(unsigned char* src, size_t gCount) {
-    unsigned char result[BLOCKSIZE];
-
-    for(size_t i = 0; i < gCount; ++i){
-        result[i] = src[i];
-    }
-
-    for(size_t i = gCount; i < BLOCKSIZE; ++i){
-        result[i] = BLOCKSIZE - gCount;
-    }
-
-    return result;
 }
 
 int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize) {
@@ -183,29 +169,29 @@ int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize)
     size_t blockSize = ctx->blockSize;
     size_t partialBlockLen = ctx->partialBlockLen;
     unsigned char result[ctx->bufferSize];
-    size_t current_blocks = partialBlockLen / BLOCKSIZE;
+    size_t current_blocks = partialBlockLen / BLOCKSIZE_MGM;
     
-    std::cout << "partialBlockLen: " << partialBlockLen << std::endl;
+    //std::cout << "partialBlockLen: " << partialBlockLen << std::endl;
 
     //ctx->mgm.encryptCuda(ctx->buffer2, result, ctx->ivu);
     //ctx->ivu += 0x04;
     if(ctx->enc){
-        if(partialBlockLen % BLOCKSIZE != 0){
-            for(size_t i = partialBlockLen; i < partialBlockLen + BLOCKSIZE * 2; ++i){
-                ctx->buffer2[i] = (BLOCKSIZE - partialBlockLen % BLOCKSIZE) + BLOCKSIZE;
+        if(partialBlockLen % BLOCKSIZE_MGM != 0){
+            for(size_t i = partialBlockLen; i < partialBlockLen + BLOCKSIZE_MGM * 2; ++i){
+                ctx->buffer2[i] = (BLOCKSIZE_MGM - partialBlockLen % BLOCKSIZE_MGM) + BLOCKSIZE_MGM;
             }
             current_blocks += 2;
         }
         else{
-            for(size_t i = 0; i < BLOCKSIZE; ++i){
-                ctx->buffer2[i] = BLOCKSIZE;
+            for(size_t i = 0; i < BLOCKSIZE_MGM; ++i){
+                ctx->buffer2[i] = BLOCKSIZE_MGM;
             }
             current_blocks++;
         } 
         ctx->mgm.encryptCuda((uint8_t*)ctx->buffer2, (uint8_t*)result, ctx->mgm.getKeys(), current_blocks);
-        std::copy_n(result, current_blocks * BLOCKSIZE, out);
-        std::cout  << "current_blocks" << current_blocks * BLOCKSIZE << std::endl;
-        *outL = current_blocks * BLOCKSIZE;
+        std::copy_n(result, current_blocks * BLOCKSIZE_MGM, out);
+        //std::cout  << "current_blocks" << current_blocks * BLOCKSIZE_MGM << std::endl;
+        *outL = current_blocks * BLOCKSIZE_MGM;
     }
     else{
         //std::cout << "line 207" << std::endl;
@@ -213,17 +199,17 @@ int magmaFinal(void* magmaCtx, unsigned char* out, size_t* outL, size_t outSize)
 
         //std::cout << "line 210" << std::endl;
 
-        size_t deleteBytes = result[current_blocks * BLOCKSIZE - 1];
+        size_t deleteBytes = result[current_blocks * BLOCKSIZE_MGM - 1];
 
-        std::copy_n(result, current_blocks * BLOCKSIZE - deleteBytes, out);
+        std::copy_n(result, current_blocks * BLOCKSIZE_MGM - deleteBytes, out);
         //std::cout << "line 215" << std::endl;
         //std::cout << "deleteBytes: " << deleteBytes << std::endl;
-        *outL = current_blocks * BLOCKSIZE - deleteBytes;
+        *outL = current_blocks * BLOCKSIZE_MGM - deleteBytes;
     }
     //std::cout << "FINAL AFTER ENCRYPT: " << std::endl;
-    //std::copy_n(result, current_blocks * BLOCKSIZE, out);
+    //std::copy_n(result, current_blocks * BLOCKSIZE_MGM, out);
     //std::cout << "FINAL AFTER COPY: " << partialBlockLen << std::endl;
-    //*outL = current_blocks * BLOCKSIZE;
+    //*outL = current_blocks * BLOCKSIZE_MGM;
 
     return 1;
 }
@@ -312,4 +298,5 @@ const OSSL_PARAM* magmaSetTableCtxParams(void* magmaCtx, void* provCtx) {
 
     return table;
 }
+
 

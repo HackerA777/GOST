@@ -20,7 +20,7 @@ extern "C" {
 #include "../myProvider.h"
 
 #define DEFAULT_KEYLENGTH 32
-#define BLOCKSIZE 8
+#define BLOCKSIZE_KUZ 16
 
 static OSSL_FUNC_provider_query_operation_fn kuznechikProvOperation; // сам провайдер
 static OSSL_FUNC_provider_get_params_fn kuznechikProvGetParams;
@@ -44,14 +44,15 @@ OSSL_FUNC_cipher_gettable_ctx_params_fn kuznechikGetTableCtxParams;
 struct kuznechikCtxSt {
     struct providerCtxSt* provCtx;
 
-    size_t keyLen;
+    size_t keyLen = DEFAULT_KEYLENGTH;
     size_t bufferSize;
 
     unsigned char* key;
     unsigned char* buffer;
     size_t blockSize;
 
-    std::vector<kuznechikByteVector> buffer2;
+    //std::vector<kuznechikByteVector> buffer2;
+    unsigned char* buffer2;
     size_t addedBytesForBuffer;
     size_t partialBlockLen;
     kuznechik kzk;
@@ -88,3 +89,4 @@ const OSSL_PARAM* kuznechikGetTableCtxParams(void* kuznechikCtx, void* provCtx);
 const OSSL_PARAM* kuznechikSetTableCtxParams(void* kuznechikCtx, void* provCtx);
 
 extern const OSSL_DISPATCH kuznechikFunctions[];
+

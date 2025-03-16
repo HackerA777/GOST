@@ -22,7 +22,7 @@ void* kuznechikNewCtx(void* provCtx) {
         std::memset(ctx, 0, sizeof(*ctx));
         ctx->provCtx = (providerCtxSt*)provCtx;
         ctx->keyLen = DEFAULT_KEYLENGTH;
-        ctx->blockSize = BLOCKSIZE;
+        ctx->blockSize = BLOCKSIZE_KUZ;
     }
     return ctx;
 }
@@ -37,17 +37,21 @@ int kuznechikEncryptInit(void* kuznechikCtx, const unsigned char* key, size_t ke
                             const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct kuznechikCtxSt* ctx = (kuznechikCtxSt*)kuznechikCtx;
     if (key != nullptr) {
+        ctx->blockSize = BLOCKSIZE_KUZ;
         delete ctx->key;
         ctx->key = new unsigned char[ctx->keyLen];
         std::copy_n(key, ctx->keyLen, ctx->key);
 
+        ctx->bufferSize = 4096;
         delete ctx->buffer;
-        ctx->buffer = new unsigned char[ivLen];
-        std::copy_n(iv, ivLen, ctx->buffer);
+        ctx->buffer = new unsigned char[ctx->bufferSize];
+        //std::copy_n(iv, ivLen, ctx->buffer);
+
+        delete ctx->buffer2;
+        ctx->buffer2 = new unsigned char[ctx->bufferSize];
 
         ctx->keyLen = keyLen;
-        ctx->bufferSize = ivLen;
-        //ctx->kzk.changeKey(key);
+        ctx->kzk.changeKey((uint8_t *)key);
 
         ctx->cudaGridSize = 512;
         ctx->kzk.setGridSize(ctx->cudaGridSize);
@@ -63,17 +67,22 @@ int kuznechikDecryptInit(void* kuznechikCtx, const unsigned char* key, size_t ke
                             const unsigned char* iv, size_t ivLen, const OSSL_PARAM params[]) {
     struct kuznechikCtxSt* ctx = (kuznechikCtxSt*)kuznechikCtx;
     if (key != nullptr) {
+        ctx->blockSize = BLOCKSIZE_KUZ;
+
         delete ctx->key;
         ctx->key = new unsigned char[ctx->keyLen];
-        std::copy_n(key, ctx->keyLen, ctx->key);
+        //std::copy_n(key, ctx->keyLen, ctx->key);
 
+        ctx->bufferSize = 4096;
         delete ctx->buffer;
-        ctx->buffer = new unsigned char[ivLen];
-        std::copy_n(iv, ivLen, ctx->buffer);
+        ctx->buffer = new unsigned char[ctx->bufferSize];
+        //std::copy_n(iv, ivLen, ctx->buffer);
+
+        delete ctx->buffer2;
+        ctx->buffer2 = new unsigned char[ctx->bufferSize];
 
         ctx->keyLen = keyLen;
-        ctx->bufferSize = ivLen;
-        //ctx->kzk.changeKey(key);
+        ctx->kzk.changeKey(key);
 
         ctx->cudaGridSize = 512;
         ctx->kzk.setGridSize(ctx->cudaGridSize);
@@ -91,23 +100,38 @@ int kuznechikUpdate(void* kuznechikCtx, unsigned char* out, size_t* outLen, size
 
     size_t blockSize = ctx->blockSize;
     size_t processed = 0;
-    size_t* partialBlockLen = &(ctx->partialBlockLen);
-    std::vector<kuznechikByteVector> result(BLOCKSIZE / sizeof(kuznechikByteVector));
+    //size_t* partialBlockLen = &(ctx->partialBlockLen);
+    //std::vector<kuznechikByteVector> result(BLOCKSIZE_KUZ / sizeof(kuznechikByteVector));
+    unsigned char result[ctx->bufferSize];
 
-    *partialBlockLen += inLen;
-    for (size_t i = 0; i < inLen / BLOCKSIZE; ++i)
-    {
-        std::copy_n(in + i * BLOCKSIZE, BLOCKSIZE, (unsigned char*)&ctx->buffer[0]);
-        ctx->kzk.processData((kuznechikByteVector*)ctx->buffer, (kuznechikByteVector*)result.data(), 
-                        ctx->bufferSize / BLOCKSIZE, ctx->enc);
-        //ctx->ivu += 0x04;
-        std::copy_n((unsigned char*)&result[0], BLOCKSIZE, out + i * BLOCKSIZE);
-        processed += blockSize;
-        ctx->partialBlockLen -= blockSize;
-        ctx->last += blockSize;
+    ctx->partialBlockLen += inLen;
+    if(ctx->enc){
+        for (size_t i = 0; i < inLen / ctx->bufferSize; ++i)
+        {
+            std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
+            ctx->kzk.processData((kuznechikByteVector*)ctx->buffer, (kuznechikByteVector*)result, 
+                            ctx->bufferSize / BLOCKSIZE_KUZ, ctx->enc);
+            //ctx->ivu += 0x04;
+            std::copy_n((unsigned char*)result, ctx->bufferSize, out + i * ctx->bufferSize);
+            processed += ctx->bufferSize;
+            ctx->partialBlockLen -= ctx->bufferSize;
+            ctx->last += ctx->bufferSize;
+        }
+    }
+    else{
+        for(size_t i = 0; i < inLen / ctx->bufferSize; ++i){
+            std::copy_n(in + i * ctx->bufferSize, ctx->bufferSize, (unsigned char*)&ctx->buffer[0]);
+            ctx->kzk.processData((kuznechikByteVector*)ctx->buffer, (kuznechikByteVector*)result, 
+                            ctx->bufferSize / BLOCKSIZE_KUZ, ctx->enc);
+            //ctx->ivu += 0x04;
+            std::copy_n((unsigned char*)result, ctx->bufferSize, out + i * ctx->bufferSize);
+            processed += ctx->bufferSize;
+            ctx->partialBlockLen -= ctx->bufferSize;
+            ctx->last += ctx->bufferSize;
+        }
     }
 
-    std::copy_n(in + processed, inLen % BLOCKSIZE, (unsigned char*)&ctx->buffer2[0]);
+    std::copy_n(in + processed, inLen % ctx->bufferSize, ctx->buffer2);
     *outLen = processed;
 
     return 1;
@@ -118,14 +142,37 @@ int kuznechikFinal(void* kuznechikCtx, unsigned char* out, size_t* outLen, size_
     struct kuznechikCtxSt* ctx = (kuznechikCtxSt*)kuznechikCtx;
     size_t blockSize = ctx->blockSize;
     size_t partialBlockLen = ctx->partialBlockLen;
-    std::vector<kuznechikByteVector> result(BLOCKSIZE / sizeof(kuznechikByteVector));
-    //ctx->kzk.encryptCuda(ctx->buffer2, result, ctx->ivu);
-    //ctx->ivu += 0x04;
-    ctx->kzk.processData((kuznechikByteVector*)ctx->buffer, (kuznechikByteVector*)result.data(), 
-                    ctx->bufferSize / BLOCKSIZE, ctx->enc);
-    std::copy_n((unsigned char*)&result[0], partialBlockLen, out);
-    *outLen = partialBlockLen;
+    unsigned char result[ctx->bufferSize];
+    size_t current_blocks = partialBlockLen / BLOCKSIZE_KUZ;
 
+    std::cout << "partialBlockLen: " << partialBlockLen << std::endl;
+    
+    if(ctx->enc){
+        if(partialBlockLen % BLOCKSIZE_KUZ != 0){
+            for(size_t i = partialBlockLen; i < partialBlockLen + BLOCKSIZE_KUZ * 2; ++i){
+                ctx->buffer2[i] = (BLOCKSIZE_KUZ - partialBlockLen % BLOCKSIZE_KUZ) + BLOCKSIZE_KUZ;
+            }
+            current_blocks += 2;
+        }
+        else{
+            for(size_t i = 0; i < BLOCKSIZE_KUZ; ++i){
+                ctx->buffer2[i] = BLOCKSIZE_KUZ;
+            }
+            current_blocks++;
+        }
+        ctx->kzk.processData((kuznechikByteVector *)ctx->buffer2, (kuznechikByteVector*)result, 
+                        current_blocks, ctx->enc);
+        std::copy_n(result, current_blocks * BLOCKSIZE_KUZ, out);
+        *outLen = current_blocks * BLOCKSIZE_KUZ;
+    }
+    else{
+        ctx->kzk.processData((kuznechikByteVector *)ctx->buffer2, (kuznechikByteVector *)result,
+                        current_blocks, ctx->enc);
+        size_t deleteBytes = result[current_blocks * BLOCKSIZE_KUZ -1];
+        std::copy_n(result, current_blocks * BLOCKSIZE_KUZ - deleteBytes, out);
+
+        *outLen = current_blocks * BLOCKSIZE_KUZ - deleteBytes;
+    }
     return 1;
 }
 
