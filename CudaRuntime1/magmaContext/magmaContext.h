@@ -17,6 +17,8 @@ extern "C" {
 #include <cstring>
 #include <cstddef>
 
+#include "../myProvider.h"
+
 #define DEFAULT_KEYLENGTH 32    // bytes
 #define BLOCKSIZE 8             // bytes
 
@@ -38,7 +40,7 @@ OSSL_FUNC_cipher_get_ctx_params_fn magmaGetCtxParams;
 OSSL_FUNC_cipher_settable_ctx_params_fn magmaSetTableCtxParams;
 OSSL_FUNC_cipher_gettable_ctx_params_fn magmaGetTableCtxParams;
 
-struct providerCtxSt;
+//struct providerCtxSt;
 
 struct magmaCtxSt { // контекст самого алгоритма
 	struct providerCtxSt* provCtx;
@@ -49,13 +51,14 @@ struct magmaCtxSt { // контекст самого алгоритма
 	unsigned char* buffer; // данные для шифрования/дешифрования
 	size_t blockSize; // размер одного шифруемого блока
 	//uint32_t bufferUint; // данные представленные в виде uint32
-	std::vector<magmaBlockT> buffer2;    // Внутренний буффер контекста алгоритма, содержащий данные для операций.
+	unsigned char* buffer2;    // Внутренний буффер контекста алгоритма, содержащий данные для операций.
 	size_t addedBytesForBuffer; // количество дополненных байт до кратности блока
 	size_t partialBlockLen; // число, описывающее фактический размер последнего необработанного блкоа данных
 	magma mgm;	// класс МАГМА (конструктор по умолчанию)
 	bool enc; // 0 = decrypt, 1 = encrypt
 	size_t last;    // число, описывающее количество обработанных данных (в байтах).
-	size_t gridSize;
+	size_t cudaGridSize;
+	size_t cudaBlockSize;
 };
 
 void* magmaNewCtx(void* provCtx);

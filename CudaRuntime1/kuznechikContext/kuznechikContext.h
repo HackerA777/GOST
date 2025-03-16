@@ -17,6 +17,8 @@ extern "C" {
 
 #include "../gParams.h"
 
+#include "../myProvider.h"
+
 #define DEFAULT_KEYLENGTH 32
 #define BLOCKSIZE 8
 
@@ -37,7 +39,7 @@ OSSL_FUNC_cipher_get_ctx_params_fn kuznechikGetCtxParams;
 OSSL_FUNC_cipher_settable_ctx_params_fn kuznechikSetTableCtxParams;
 OSSL_FUNC_cipher_gettable_ctx_params_fn kuznechikGetTableCtxParams;
 
-struct providerCtxSt;
+///struct providerCtxSt;
 
 struct kuznechikCtxSt {
     struct providerCtxSt* provCtx;

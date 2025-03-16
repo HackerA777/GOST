@@ -1,16 +1,5 @@
-# Test CUDA
-#cmake_minimum_required(VERSION 3.25)
-#project(myapp)
+#Check usual algorithm
 
-#set(CMAKE_CXX_STANDARD 20)
-
-#find_package(CUDAToolkit REQUIRED)
-#add_executable(${PROJECT_NAME} test.cpp)
-
-#target_link_libraries(${PROJECT_NAME} CUDA::cudart)
-#
-##Check usual algorithm
-#
 #cmake_minimum_required(VERSION 3.25)
 #
 #project(GOST CXX CUDA)
@@ -19,13 +8,14 @@
 #
 #find_package(CUDAToolkit REQUIRED)
 #
-#add_executable(${PROJECT_NAME} main.cpp 
-#    ./structures/structures.cuh
-#    ./magma/magma.cuh
-#    ./magma/magma.cu
-#    ./kuznechik/kuznechik.cuh
-#    ./kuznechik/kuznechik.cu
-#    getInfoOfDevice.cu
+#add_executable(${PROJECT_NAME} 
+#        main.cpp 
+#        ./structures/structures.cuh
+#        ./magma/magma.cuh
+#        ./magma/magma.cu
+#        ./kuznechik/kuznechik.cuh
+#        ./kuznechik/kuznechik.cu
+#        getInfoOfDevice.cu
 #    )
 #
 #target_link_libraries(${PROJECT_NAME} CUDA::cudart)
@@ -35,7 +25,12 @@ cmake_minimum_required(VERSION 3.25 FATAL_ERROR)
 
 set(BUILD_SHARED_LIBS ON)
 
-project(gost_provider CXX CUDA)
+project(gost_provider 
+        VERSION 1.0
+        DESCRIPTION "GOST algorithm cipher"
+        LANGUAGES CXX CUDA)
+
+add_compile_definitions(AUTHOR="@HackerA777")
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
@@ -63,3 +58,16 @@ set(gost_source myProvider.cpp gParams.cpp ./magma/magma.cu ./magmaContext/magma
         ./kuznechik/kuznechik.cu ./kuznechikContext/kuznechikContext.cpp)
 
 build_provider(gost_provider "${gost_source}" libprov)
+
+#generateFiles
+#cmake_minimum_required(VERSION 3.25)
+#
+#project(generateFile CXX)
+#
+#set(CMAKE_CXX_STANDARD 20)
+#
+#add_executable(${PROJECT_NAME} 
+#        ./generateFile/generateFile.h
+#        ./generateFile/generateFile.cpp
+#        ./generateFile/generate.cpp
+#)

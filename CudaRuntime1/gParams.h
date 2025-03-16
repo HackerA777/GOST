@@ -9,7 +9,5 @@
 #define V_PARAM_keylen 4
 #define S_PARAM_version "version"
 #define V_PARAM_version 5
-#define S_PARAM_ivlen "ivlen"
-#define V_PARAM_ivlen 6
 
 int gostParamsParse(const char* key);

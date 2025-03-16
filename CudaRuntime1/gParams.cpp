@@ -194,33 +194,6 @@ int gostParamsParse(const char* key)
             break;
         }
         break;
-    case 'i':
-    case 'I':
-        switch (*p++) {
-        case 'v':
-        case 'V':
-            switch (*p++) {
-            case 'l':
-            case 'L':
-                switch (*p++) {
-                case 'e':
-                case 'E':
-                    switch (*p++) {
-                    case 'n':
-                    case 'N':
-                        switch (*p++) {
-                        case '\0':
-                            return V_PARAM_ivlen;
-                        }
-                        break;
-                    }
-                    break;
-                }
-                break;
-            }
-            break;
-        }
-        break;
     }
     return 0;
 }

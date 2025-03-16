@@ -156,9 +156,6 @@ int kuznechikGetParams(OSSL_PARAM params[]) {
         case V_PARAM_keylen:
             ok &= provnum_set_size_t(p, DEFAULT_KEYLENGTH) >= 0;
             break;
-        case V_PARAM_ivlen:
-            ok &= provnum_set_size_t(p, DEFAULT_KEYLENGTH) >= 0;
-            break;
         }
     return ok;
 }
@@ -179,18 +176,6 @@ int kuznechikGetCtxParams(void* kuznechikCtx, OSSL_PARAM params[]) {
             }
     }
 
-    if (ctx->bufferSize > 0)
-    {
-        OSSL_PARAM* p;
-        for (p = params; p->key != NULL; p++)
-            switch (gostParamsParse(p->key))
-            {
-            case V_PARAM_ivlen:
-                ok &= provnum_set_size_t(p, ctx->bufferSize) >= 0;
-                break;
-            }
-    }
-
     return ok;
 }
 
@@ -204,12 +189,6 @@ int kuznechikSetCtxParams(void* kuznechikCtx, const OSSL_PARAM params[]) {
         memcpy(ctx->key, key, sizeof(ctx->key));
     }
 
-    if ((p = OSSL_PARAM_locate_const(params, "iv")) != NULL) {
-        unsigned char iv[DEFAULT_KEYLENGTH];
-        size_t ivLen = sizeof(iv);
-        memcpy(ctx->buffer, iv, sizeof(ctx->buffer));
-    }
-
     return 1;
 }
 
@@ -218,7 +197,6 @@ const OSSL_PARAM* kuznechikGetTableCtxParams(void* kuznechikCtx, void* provCtx) 
     {
         { S_PARAM_blocksize, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
         { S_PARAM_keylen, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
-        { S_PARAM_ivlen, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
         { NULL, 0, NULL, 0, 0 },
     };
 
@@ -230,7 +208,6 @@ const OSSL_PARAM* kuznechikSetTableCtxParams(void* kuznechikCtx, void* provCtx) 
     {
         { S_PARAM_blocksize, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
         { S_PARAM_keylen, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
-        { S_PARAM_ivlen, OSSL_PARAM_UNSIGNED_INTEGER, NULL, sizeof(size_t), 0 },
         { NULL, 0, NULL, 0, 0 },
     };
 

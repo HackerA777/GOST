@@ -12,18 +12,18 @@
 
 // Provider context
 
-static void* providerCtxFree(struct providerCtxSt* ctx) {
+void providerCtxFree(struct providerCtxSt* ctx) {
 	/*if (ctx == nullptr)
 		proverr_ctx_free(ctx->core_handle)*/
 	delete ctx;
 } 
 
-static struct providerCtxSt* providerCtxNew(const OSSL_CORE_HANDLE* core, const OSSL_DISPATCH* in) {
+struct providerCtxSt* providerCtxNew(const OSSL_CORE_HANDLE* core, const OSSL_DISPATCH* in) {
 	struct providerCtxSt* ctx;
 	ctx = new providerCtxSt;
 
 	if (ctx != nullptr)
-		ctx->coreHandle = (OSSL_CORE_HANDLE *)core;
+		ctx->handle = (OSSL_CORE_HANDLE *)core;
 	else {
 		providerCtxFree(ctx);
 		ctx = nullptr;
@@ -39,23 +39,23 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE* core, const OSSL_DISPATCH* in, co
 	return 1;
 }
 
-static void gostProvTeardown(void* providerCtx) {
+void gostProvTeardown(void* providerCtx) {
 	providerCtxFree((providerCtxSt*)providerCtx);
 }
 
 /* The function that returns the appropriate algorithm table per operation */
-static const OSSL_ALGORITHM* gostProvOperation(void* vprovctx, int operationId, int* noCache)
+const OSSL_ALGORITHM* gostProvOperation(void* vprovctx, int operationId, int* noCache)
 {
 	*noCache = 0;
 	switch (operationId) {
 	case OSSL_OP_CIPHER:
-		return gostChipersTable;
+		return ghostChipersTable;
 	}
 	return NULL;
 }
 
-static OSSL_FUNC_provider_get_params_fn magma_prov_get_params;
-static OSSL_FUNC_provider_get_reason_strings_fn magma_prov_get_reason_strings;
-
-static OSSL_FUNC_provider_get_params_fn kuznechik_prov_get_params;
-static OSSL_FUNC_provider_get_reason_strings_fn kuznechik_prov_get_reason_strings;
+//OSSL_FUNC_provider_get_params_fn magma_prov_get_params;
+//OSSL_FUNC_provider_get_reason_strings_fn magma_prov_get_reason_strings;
+//
+//OSSL_FUNC_provider_get_params_fn kuznechik_prov_get_params;
+//OSSL_FUNC_provider_get_reason_strings_fn kuznechik_prov_get_reason_strings;

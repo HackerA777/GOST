@@ -1,5 +1,6 @@
 #include "./magma/magma.cuh"
 #include "./kuznechik/kuznechik.cuh"
+#include <fstream>
 
 template<typename typeVector>
 std::string printVector(const typeVector& block) {
@@ -44,6 +45,66 @@ int main()
     };
     magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
     magmaElement.checkEcnAndDec();
+
+    const std::string inputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/input/test8"; 
+    const std::string outputPath = "/home/user/Desktop/GOST/GOST/CudaRuntime1/testFiles/output/test8"; 
+    std::cout << "Opening file: " << inputPath << std::endl;
+    std::ifstream inputFile(inputPath, std::ios::binary);
+    if (!inputFile){
+        std::cerr << "Error opening file: " << inputPath << std::endl;
+    }
+
+    inputFile.seekg(0, std::ios::end);        // Переходим в конец файла
+    size_t inputFileSize = inputFile.tellg();      // Получаем размер файла
+    inputFile.seekg(0, std::ios::beg);
+
+    std::vector<uint8_t> bufferIn {};
+    std::vector<uint8_t> bufferOut {};
+    bufferIn.resize(inputFileSize);
+    bufferOut.resize(inputFileSize);
+
+    inputFile.read(reinterpret_cast<char*>(bufferIn.data()), inputFileSize);
+
+    if (inputFile.gcount() != inputFileSize) {
+        std::cerr << "Error read input file!" << std::endl;
+        return -1;
+    }
+
+    inputFile.close();
+
+    //std::cout << "input buffer: " << std::endl;
+    //for(size_t i = 0; i < inputFileSize; ++i){
+    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferIn[i]) << std::endl;
+    //}
+
+    std::cout << (uint8_t*)bufferIn.data() << std::endl;
+
+    //std::cout << "Kyes: " << magmaElement.getKeys().keys < std::endl;
+    magmaElement.encryptCuda(bufferIn.data(), bufferOut.data(), magmaElement.getKeys(), bufferIn.size() / 8);
+
+    //std::cout << "output buffer: " << std::endl;
+    //for(size_t i = 0; i < inputFileSize; ++i){
+    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferOut[i]) << std::endl;
+    //}
+
+    //magmaElement.decryptCuda(bufferOut.data(), bufferOut.data(), magmaElement.getKeys(), bufferIn.size() / 8);
+
+    //std::cout << "output buffer: " << std::endl;
+    //for(size_t i = 0; i < inputFileSize; ++i){
+    //    std::cout << "Byte " << i << ": " << static_cast<int>(bufferOut[i]) << std::endl;
+    //}
+
+    std::cout << "Opening file: " << outputPath << std::endl;
+    std::ofstream outputFile(outputPath, std::ios::binary);
+    if (!outputFile){
+        std::cerr << "Error opening file: " << outputPath << std::endl;
+        return -1;
+    }
+
+    outputFile.write((char*)bufferOut.data(), bufferOut.size());
+    outputFile.close();
+    std::cout << "Output data written to file: " << outputPath << " (" << bufferOut.size() << " bytes)" << std::endl;
+
     //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 

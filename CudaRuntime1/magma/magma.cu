@@ -161,7 +161,8 @@ void magma::encryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaK
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    //cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
     cudaCheck(cudaHostRegister((void*)blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
 
@@ -193,11 +194,13 @@ void magma::decryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const magmaK
 
     cudaError_t cudaStatus;
 
-    cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    //cudaCheck(cudaMemcpy(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpy(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));    
 
     cudaCheck(cudaMemcpy(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
 
-    cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    //cudaCheck(cudaMemcpyAsync(dev_keys.get(), inputKeys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
     cudaCheck(cudaHostRegister((void*)blocks, countBlocks * sizeof(magmaBlockT), cudaHostRegisterDefault));
 
     cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, countBlocks * sizeof(magmaBlockT), cudaMemcpyHostToDevice));
@@ -246,7 +249,7 @@ void magma::checkEcnAndDec() {
     std::copy(encryptValidString, encryptValidString + 8, validBlock.bytes);
     std::copy(keys, keys + 32, testKeys.keys->bytes);
 
-    encryptCuda( testBlock.bytes, resultBlock.bytes, testKeys, 1);
+    encryptCuda(testBlock.bytes, resultBlock.bytes, testKeys, 1);
     std::cout << "Test string: " << testBlock << std::endl;
     std::cout << "Result encryption test string: " << resultBlock << std::endl;
     std::cout << "Valide encryption string: " << validBlock << std::endl;
@@ -273,6 +276,7 @@ double magma::testSpeedUnequalBytes() {
     auto start = std::chrono::high_resolution_clock::now();
 
     encryptCuda((uint8_t*)data.data(), (uint8_t*)data.data(), this->keys, data.size());
+
     duration time = std::chrono::high_resolution_clock::now() - start;
     double speed = (size * sizeof(magmaBlockT) / 1024.0 / 1024 / 1024) / time.count() * 1000;
     std::cout << "SIZE: " << size << "\tTIME: " << time.count() << "ms\t SPEED: " << speed  << " GB/s" << " BLOCK SIZE: " << blockSize << " GRID SIZE: " << gridSize << std::endl;
