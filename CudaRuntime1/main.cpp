@@ -1,5 +1,5 @@
-#include "magma.cuh"
-#include "kuznechik.cuh"
+#include "./magma/magma.cuh"
+#include "./kuznechik/kuznechik.cuh"
 #include <Windows.h>
 
 template<typename typeVector>
@@ -48,7 +48,7 @@ int main()
     };
     magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
     magmaElement.checkEcnAndDec();
-    magmaElement.testSpeedUnequalBytes();
+    //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
     uint8_t testKeyBytesKuz[] = { 
@@ -63,12 +63,12 @@ int main()
 
     kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
-    std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5;
+    std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
     kuznechikElement.checkEcnAndDec();
-    kuznechikElement.testSpeedUnequalBytes();
+    //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
     return 0;
 }

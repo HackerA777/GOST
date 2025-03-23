@@ -1,7 +1,7 @@
 #pragma once
 #ifndef H_MAGMA
 #define H_MAGMA
-#include "structures.cuh"
+#include "../structures/structures.cuh"
 
 class magma {
 private:

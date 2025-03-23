@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CudaCompile Include="getInfoOfDevice.cu" />
+    <CudaCompile Include="main.cpp" />
+    <CudaCompile Include="kuznechik\kuznechik.cu">
+      <Filter>kuznechik</Filter>
+    </CudaCompile>
+    <CudaCompile Include="magma\magma.cu">
+      <Filter>magma</Filter>
+    </CudaCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="kuznechik">
+      <UniqueIdentifier>{7f6c64a2-cb38-4d46-aee3-bec6307150e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="magma">
+      <UniqueIdentifier>{d9e5fe85-6bfc-432c-8163-56e3c3e4d567}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="structures">
+      <UniqueIdentifier>{2dc25621-bf35-4b63-8f13-5ab42843fff5}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="kuznechik\kuznechik.cuh">
+      <Filter>kuznechik</Filter>
+    </ClInclude>
+    <ClInclude Include="magma\magma.cuh">
+      <Filter>magma</Filter>
+    </ClInclude>
+    <ClInclude Include="structures\structures.cuh">
+      <Filter>structures</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>

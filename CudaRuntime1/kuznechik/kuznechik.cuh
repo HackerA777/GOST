@@ -1,7 +1,7 @@
 #pragma once
 #ifndef H_KUZNECHIK
 #define H_KUZNECHIK
-#include "structures.cuh"
+#include "../structures/structures.cuh"
 #include <vector>
 #include <array>
 
