@@ -4,6 +4,8 @@
 #include <iostream>
 #include <cstdint>
 #include <algorithm>
+#include <span>
+#include <vector>
 #include "cuda_runtime.h"
 #include "device_launch_parameters.h"
 
@@ -28,6 +30,9 @@ union magmaBlockT {
         magmaHalfBlockT lo, hi;
     };
     uint8_t bytes[sizeof(magmaHalfBlockT) * 2];
+    //magmaBlockT() = default;
+    //explicit magmaBlockT(uint8_t* data);
+    //magmaBlockT(uint8_t);
 };
 
 inline std::ostream& operator << (std::ostream& s, const magmaBlockT& block) {
@@ -133,5 +138,13 @@ cuda_ptr<T> cuda_alloc_async(const size_t n) {
     cudaCheck(cudaMallocAsync((void**)&ptr, sizeof(std::remove_extent_t<T>) * n, 0));
     return cuda_ptr<T>{ptr};
 }
+
+struct timeRes {
+    std::string testName;
+    std::string path;
+    size_t size;
+    bool encrypt;
+    std::vector<float> time{ 0, 0 };
+};
 
 #endif

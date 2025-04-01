@@ -20,6 +20,12 @@
     <Filter Include="structures">
       <UniqueIdentifier>{2dc25621-bf35-4b63-8f13-5ab42843fff5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="generateFiles">
+      <UniqueIdentifier>{0144c3ca-25bc-4d1c-91ab-63cf6917d9ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="testSpeed">
+      <UniqueIdentifier>{76fef6f9-1c41-4c05-b099-214660cda388}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kuznechik\kuznechik.cuh">
@@ -31,5 +37,19 @@
     <ClInclude Include="structures\structures.cuh">
       <Filter>structures</Filter>
     </ClInclude>
+    <ClInclude Include="generateFiles\generateFile.h">
+      <Filter>generateFiles</Filter>
+    </ClInclude>
+    <ClInclude Include="testSpeed\testSpeed.h">
+      <Filter>testSpeed</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="testSpeed\testSpeed.cpp">
+      <Filter>testSpeed</Filter>
+    </ClCompile>
+    <ClCompile Include="generateFiles\generateFile.cpp">
+      <Filter>generateFiles</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

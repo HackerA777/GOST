@@ -1,6 +1,8 @@
 #include "./magma/magma.cuh"
 #include "./kuznechik/kuznechik.cuh"
+#include "./testSpeed/testSpeed.h"
 #include <Windows.h>
+#include <fstream>
 
 template<typename typeVector>
 std::string printVector(const typeVector& block) {
@@ -15,25 +17,15 @@ std::string printVector(const typeVector& block) {
     return result;
 }
 
+
+
 int main()
 {
     // SetConsoleOutputCP(1251);
     // SetConsoleCP(1251);
     SetConsoleOutputCP(65001);
-    /*cudaDeviceProp prop;
-    int count;
-    cudaError_t(cudaGetDeviceCount(&count));
-    for (int i = 0; i < count; i++) {
-        cudaError_t(cudaGetDeviceProperties(&prop, i));
-        std::cout << "--- Информация о мультипроцессорах для устройства " << i << " ---" << std::endl;
-        std::cout << "Количество мультипроцессоров: " << prop.multiProcessorCount << std::endl;
-        std::cout << "Разделяемая память на один МП: " << prop.sharedMemPerBlock << std::endl;
-        std::cout << "Регистров на один МП: " << prop.regsPerBlock << std::endl;
-        std::cout << "Нитей в варпе: " << prop.warpSize << std::endl;
-        std::cout << "Макс. количество ниетй в блоке: " << prop.maxThreadsPerBlock << std::endl;
-        std::cout << "Макс. количество нитей по измерениям: (" << prop.maxThreadsDim[0] << ", " << prop.maxThreadsDim[1] << ", " << prop.maxThreadsDim[2] << ")" << std::endl;
-        std::cout << "Максимальные размеры сетки: (" << prop.maxGridSize[0] << ", " << prop.maxGridSize[1] << ", " << prop.maxGridSize[2] << ")" << std::endl;
-    }*/
+
+
     cudaDeviceProp prop;
     cudaError_t(cudaGetDeviceProperties(&prop, 0));
     const unsigned char keys[32] = {
@@ -47,7 +39,120 @@ int main()
         0xff, 0xfe, 0xfd, 0xfc
     };
     magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
-    magmaElement.checkEcnAndDec();
+    //magmaElement.checkEcnAndDec();
+
+    const unsigned char testString[8] = {
+        0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe
+    };
+
+    magmaBlockT t;
+    std::vector<magmaBlockT> tVector(2);
+
+    std::copy(testString, testString + 8, t.bytes);
+    std::copy(testString, testString + 8, tVector[0].bytes);
+    std::copy(testString, testString + 8, tVector[1].bytes);
+    //tVector.push_back(t);
+    //tVector.push_back(t);
+    //std::copy(t.bytes, t.bytes + 8, tPtr->bytes);
+
+    //std::span<magmaBlockT> testBlock(t);
+    //testBlock.data()->bytes = t.bytes;
+    
+
+    /*std::cout << "Test span: " << std::endl;
+
+    for (auto i : testBlock) {
+        std::cout << i;
+    }
+    std::cout << std::endl;*/
+
+    //std::cout << "test copy: " << *tPtr << std::endl;
+
+    std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
+
+    std::vector<float> timeDefault;
+
+    timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, true);
+
+    std::cout << "\ntime dafault: ";
+    for (auto time : timeDefault) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, false);
+
+    std::cout << "\ntime default: ";
+    for (auto time : timeDefault) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    std::cout << std::endl << "Test Managed" << std::endl;
+
+    std::vector<float> timeManaged;
+
+    timeManaged = magmaElement.testManaged(tVector, tVector.size(), 16, 16, true);
+
+    std::cout << "\ntime managed: ";
+    for (auto time : timeManaged) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    timeManaged = magmaElement.testManaged(tVector, tVector.size(), 16, 16, false);
+
+    std::cout << "\ntime managed: ";
+    for (auto time : timeManaged) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    std::cout << std::endl << "Test Pinned" << std::endl;
+
+    std::vector<float> timePinned;
+
+    timePinned = magmaElement.testPinned(tVector, tVector.size(), 16, 16, true);
+
+    std::cout << "\ntime pinned: ";
+    for (auto time : timePinned) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    timePinned = magmaElement.testPinned(tVector, tVector.size(), 16, 16, false);
+
+    std::cout << "\ntime pinned: ";
+    for (auto time : timePinned) {
+        std::cout << time << "; ";
+    }
+    std::cout << "milisecond" << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    /*std::vector<uint8_t> buffer = readFile("C:\\Users\\artio\\Documents\\testFilesForGOST\\1bytes");
+    std::cout << "\nbuffer\n" << buffer.data() << std::endl;
+    std::vector<uint8_t> result;
+    result.resize(buffer.size());
+
+    magmaElement.encryptCuda((unsigned char*)buffer.data(), (unsigned char*)result.data(), buffer.size() / 8);
+
+    std::cout << "\resultEnc\n" << result.data() << std::endl;
+
+    magmaElement.decryptCuda((unsigned char*)result.data(), (unsigned char*)result.data(), buffer.size() / 8);
+
+    std::cout << "\resultDec\n" << result.data() << std::endl;*/
+
     //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
@@ -63,12 +168,15 @@ int main()
 
     kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
-    std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
+   // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
     kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
-    kuznechikElement.checkEcnAndDec();
+    //kuznechikElement.checkEcnAndDec();
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
+
+    testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST");
+
     return 0;
 }
