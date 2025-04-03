@@ -33,8 +33,16 @@ void readFile(const std::string path, std::vector<magmaBlockT>& result) {
     //return result;
 }
 
-void testSpeed(const std::string& path) {
-    std::vector<size_t> range{ 1*1024*1024, 1024 * 1024 * 1024};
+void replaceTimeRes(timeRes &timeRes_, const std::string newPath, const std::string nameTest, const bool encrypt, const size_t size) {
+    timeRes_.path = newPath;
+    timeRes_.testName = nameTest;
+    timeRes_.encrypt = encrypt;
+    timeRes_.size = size;
+}
+
+void testSpeed(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize) {
+    //std::vector<size_t> range{ 1*1024*1024, 1024 * 1024 * 1024};
+    //std::vector<size_t> range{ 16*1024, 32*1024 };
     std::vector<magmaBlockT> buffer;
     std::string newPath;
 
@@ -48,7 +56,7 @@ void testSpeed(const std::string& path) {
         0xfb, 0xfa, 0xf9, 0xf8,
         0xff, 0xfe, 0xfd, 0xfc
     };
-    magma testMagma(keys, 1024, 32, 256);
+    magma testMagma(keys, 1024, blockSize, gridSize);
 
 	generateFile generateFileForTestSpeed(range, 8);
     if (generateFileForTestSpeed.generate(path)) {
@@ -58,7 +66,7 @@ void testSpeed(const std::string& path) {
         std::cout << "create files error" << std::endl;
     }
 
-    std::vector<float> time{ 0, 0 };
+    //std::vector<float> time{ 0, 0 };
     std::vector<timeRes> timeVector;
 
     for (size_t i = range[0]; i <= range[1]; i = i * 2) {
@@ -69,12 +77,21 @@ void testSpeed(const std::string& path) {
         newPath.append("bytes");
         readFile(newPath, buffer);
 
-        tempTimeRes.path = newPath;
-        tempTimeRes.testName = "testPinned";
-        tempTimeRes.encrypt = true;
-        tempTimeRes.size = i;
+        replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
+
+        tempTimeRes.time = testMagma.testDefault(buffer, buffer.size(), 16, 16, true);
+
+        timeVector.push_back(tempTimeRes);
+
+        replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
 
         tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, true);
+
+        timeVector.push_back(tempTimeRes);
+
+        replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
+
+        tempTimeRes.time = testMagma.testManaged(buffer, buffer.size(), 16, 16, true);
 
         timeVector.push_back(tempTimeRes);
 
@@ -88,9 +105,21 @@ void testSpeed(const std::string& path) {
         file.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
         file.close();
 
-        tempTimeRes.encrypt = false;
+        replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
+
+        tempTimeRes.time = testMagma.testManaged(buffer, buffer.size(), 16, 16, false);
+
+        timeVector.push_back(tempTimeRes);
+
+        replaceTimeRes(tempTimeRes, newPath, "testPinned", false, i);
 
         tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, false);
+
+        timeVector.push_back(tempTimeRes);
+
+        replaceTimeRes(tempTimeRes, newPath, "testDefault", false, i);
+
+        tempTimeRes.time = testMagma.testDefault(buffer, buffer.size(), 16, 16, false);
 
         timeVector.push_back(tempTimeRes);
 
@@ -105,54 +134,12 @@ void testSpeed(const std::string& path) {
         fileDec.close();
 
         newPath.clear();
-
-        /*newPath.append(path.data());
-        newPath.append("\\");
-        newPath.append(std::to_string(i));
-        newPath.append("bytes");
-        readFile(newPath, buffer);
-
-        tempTimeRes.path = newPath;
-        tempTimeRes.testName = "testPinned";
-        tempTimeRes.encrypt = true;
-        tempTimeRes.size = i;
-
-        tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, true);
-
-        timeVector.push_back(tempTimeRes);
-
-        newPath.append("Enc");
-
-        std::ofstream file(newPath, std::ios::binary);
-        if (!file) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        file.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        file.close();
-
-        tempTimeRes.encrypt = false;
-
-        tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, false);
-
-        timeVector.push_back(tempTimeRes);
-
-        newPath.append("Dec");
-
-        std::ofstream fileDec(newPath, std::ios::binary);
-        if (!fileDec) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        fileDec.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        fileDec.close();
-
-        newPath.clear();*/
         
+        buffer.clear();
     }
 
     for (auto elem : timeVector) {
-        std::cout << elem.testName << ": size: " << elem.size << " path: " << elem.path << " enc: " << elem.encrypt << std::endl;
+        std::cout << elem.testName << ": size: " << elem.size / 1024 /1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
         std::cout << "Time copyAndEnc: " << elem.time[0] / 1000 << "s; Time enc: " << elem.time[1] / 1000 << "s" << std::endl;
     }
 }

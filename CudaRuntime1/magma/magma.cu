@@ -407,6 +407,9 @@ std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size
         cudaCheck(cudaStreamSynchronize(0));
 
         cudaEventRecord(stopCopyAndEnc);
+        
+        cudaCheck(cudaFree(dev_keys.get()));
+        cudaCheck(cudaFree(dev_blocks.get()));
 
         //std::cout << "Data after encrypt: " << data.data() << std::endl;
     }
@@ -433,6 +436,8 @@ std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size
         cudaCheck(cudaStreamSynchronize(0));
 
         cudaEventRecord(stopCopyAndEnc);
+        cudaCheck(cudaFree(dev_keys.get()));
+        cudaCheck(cudaFree(dev_blocks.get()));
 
         //std::cout << "Data after decrypt: " << data.data() << std::endl;
     }
@@ -453,7 +458,6 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
     cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
 
-    cudaError_t cudaStatus;
     cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
     cudaEventCreate(&startEnc);
     cudaEventCreate(&stopEnc);
@@ -463,8 +467,10 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     if (encryptStatus) {
 
         //std::cout << "Data before encrypt: " << data.data() << std::endl;
-
-        cudaEventRecord(startCopyAndEnc);
+        
+        
+        cudaCheck(cudaEventRecord(startCopyAndEnc));
+        //cudaCheck(cudaGetLastError());
 
         cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
         cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
@@ -487,12 +493,15 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
 
         cudaCheck(cudaStreamSynchronize(0));
 
+        cudaCheck(cudaFree(dev_keys.get()));
+        cudaCheck(cudaFree(dev_blocks.get()));
+
         cudaEventRecord(stopCopyAndEnc);
 
-        std::cout << "Data after encrypt: " << data.data() << std::endl;
+        //std::cout << "Data after encrypt: " << data.data() << std::endl;
     }
     else {
-        std::cout << "Data before decrypt: " << data.data() << std::endl;
+        //std::cout << "Data before decrypt: " << data.data() << std::endl;
 
         cudaEventRecord(startCopyAndEnc);
 
@@ -519,7 +528,9 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
 
         cudaEventRecord(stopCopyAndEnc);
 
-        std::cout << "Data after decrypt: " << data.data() << std::endl;
+        //std::cout << "Data after decrypt: " << data.data() << std::endl;
+        cudaCheck(cudaFree(dev_keys.get()));
+        cudaCheck(cudaFree(dev_blocks.get()));
     }
 
     cudaEventSynchronize(stopEnc);
@@ -555,7 +566,7 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
     //buffer = data;
 
     std::copy(this->keys.keys, this->keys.keys + 32, keys->keys);
-    std::copy(data.data(), data.data() + dataSize, buffer);
+    std::copy(data.data(), data.data() + countBlocks, buffer);
 
     //std::cout << "Buffer: " << buffer << std::endl;
 
@@ -581,7 +592,7 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
 
     //std::cout << "After Decrypt. Buffer: " << buffer->data()<< std::endl;
 
-    std::copy(buffer, buffer + dataSize, data.data());
+    std::copy(buffer, buffer + countBlocks, data.data());
 
     cudaCheck(cudaFree(keys));
     cudaCheck(cudaFree(buffer));

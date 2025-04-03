@@ -176,7 +176,10 @@ int main()
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
 
-    testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST");
+    testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", {1024*1024, 1024*1024*1024}, 128, 128);
+
+    //int answer;
+    //std::cin >> answer;
 
     return 0;
 }

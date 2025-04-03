@@ -98,6 +98,13 @@ inline std::ostream& operator << (std::ostream& s, const kuznechikByteVector& bl
     return s;
 }
 
+struct timeRes {
+    std::string testName;
+    std::string path;
+    size_t size;
+    bool encrypt;
+    std::vector<float> time{ 0, 0 };
+};
 
 
 // structures for CUDA
@@ -138,13 +145,4 @@ cuda_ptr<T> cuda_alloc_async(const size_t n) {
     cudaCheck(cudaMallocAsync((void**)&ptr, sizeof(std::remove_extent_t<T>) * n, 0));
     return cuda_ptr<T>{ptr};
 }
-
-struct timeRes {
-    std::string testName;
-    std::string path;
-    size_t size;
-    bool encrypt;
-    std::vector<float> time{ 0, 0 };
-};
-
 #endif
