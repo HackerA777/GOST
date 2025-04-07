@@ -142,6 +142,7 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
 
     for (auto elem : timeVector) {
         std::cout << elem.testName << ": size: " << elem.size / 1024 /1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
+        std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
         std::cout << "Time copyAndEnc: " << elem.time[0] / 1000 << "s; Time enc: " << elem.time[1] / 1000 << "s" << std::endl;
     }
 }
