@@ -21,9 +21,9 @@ public:
 	void checkEcnAndDec();
 	double testSpeedUnequalBytes();
 
-	std::vector<float> testDefault(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
-	std::vector<float> testPinned(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
-	std::vector<float> testManaged(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blokSize, const size_t gridSize, const bool encryptStatus);
+	std::vector<float> testDefault(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
+	std::vector<float> testPinned(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
+	std::vector<float> testManaged(std::vector<magmaBlockT>& data, const size_t blokSize, const size_t gridSize, const bool encryptStatus);
 
 	void setGridSize(const size_t newGridSize);
 	void setBlockSize(const size_t newBlockSize);

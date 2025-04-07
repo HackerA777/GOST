@@ -26,8 +26,8 @@ int main()
     SetConsoleOutputCP(65001);
 
 
-    cudaDeviceProp prop;
-    cudaError_t(cudaGetDeviceProperties(&prop, 0));
+    //cudaDeviceProp prop;
+    //cudaError_t(cudaGetDeviceProperties(&prop, 0));
     const unsigned char keys[32] = {
         0xcc, 0xdd, 0xee, 0xff,
         0x88, 0x99, 0xaa, 0xbb,
@@ -38,19 +38,19 @@ int main()
         0xfb, 0xfa, 0xf9, 0xf8,
         0xff, 0xfe, 0xfd, 0xfc
     };
-    magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
+    //magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
     //magmaElement.checkEcnAndDec();
 
     const unsigned char testString[8] = {
         0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe
     };
 
-    magmaBlockT t;
-    std::vector<magmaBlockT> tVector(2);
-
-    std::copy(testString, testString + 8, t.bytes);
-    std::copy(testString, testString + 8, tVector[0].bytes);
-    std::copy(testString, testString + 8, tVector[1].bytes);
+    //magmaBlockT t;
+    //std::vector<magmaBlockT> tVector(2);
+    //
+    //std::copy(testString, testString + 8, t.bytes);
+    //std::copy(testString, testString + 8, tVector[0].bytes);
+    //std::copy(testString, testString + 8, tVector[1].bytes);
     //tVector.push_back(t);
     //tVector.push_back(t);
     //std::copy(t.bytes, t.bytes + 8, tPtr->bytes);
@@ -68,7 +68,7 @@ int main()
 
     //std::cout << "test copy: " << *tPtr << std::endl;
 
-    std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
+    /*std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
 
     std::vector<float> timeDefault;
 
@@ -139,6 +139,7 @@ int main()
     std::cout << "milisecond" << std::endl;
 
     std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    */
 
     /*std::vector<uint8_t> buffer = readFile("C:\\Users\\artio\\Documents\\testFilesForGOST\\1bytes");
     std::cout << "\nbuffer\n" << buffer.data() << std::endl;
@@ -166,17 +167,18 @@ int main()
         0xff, 0xee, 0xdd, 0xcc, 
         0xbb, 0xaa, 0x99, 0x88 };
 
-    kuznechikKeys testKeyKuz(testKeyBytesKuz);
+    //kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
    // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
-    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
+    //kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
     //kuznechikElement.checkEcnAndDec();
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();
 
-    testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", {1024*1024, 1024*1024*1024}, 128, 128);
+    testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", {1024*1024, 1024*1024*1024}, 256, 512);
+    //testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 16, 64 }, 128, 128);
 
     //int answer;
     //std::cin >> answer;

@@ -367,143 +367,151 @@ magma::magma(const unsigned char keys[32], const size_t buffSize, const unsigned
     this->gridSize = gridSize;
 }
 
-std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+    cudaCheck(cudaGetLastError());
     std::vector<float> time{ 0, 0 };
 
-    const size_t dataSize = countBlocks * 8;
+    const size_t countBlocks = data.size();
+    const size_t dataSize = countBlocks * sizeof(magmaBlockT);
 
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
-    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(countBlocks);
 
-    //cudaError_t cudaStatus;
     cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
-    cudaEventCreate(&startEnc);
-    cudaEventCreate(&stopEnc);
-    cudaEventCreate(&startCopyAndEnc);
-    cudaEventCreate(&stopCopyAndEnc);
+    cudaCheck(cudaEventCreate(&startEnc));
+    cudaCheck(cudaEventCreate(&stopEnc));
+    cudaCheck(cudaEventCreate(&startCopyAndEnc));
+    cudaCheck(cudaEventCreate(&stopCopyAndEnc));
 
     if (encryptStatus) {
 
         //std::cout << "Data before encrypt: " << data.data() << std::endl;
 
-        cudaEventRecord(startCopyAndEnc);
+        cudaCheck(cudaEventRecord(startCopyAndEnc));
+        //_Thrd_sleep_for(10000);
 
+        cudaCheck(cudaGetLastError());
+        
         cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
         cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(startEnc);
+        cudaCheck(cudaEventRecord(startEnc));
+
+        cudaCheck(cudaGetLastError());
 
         encrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(stopEnc);
+        cudaCheck(cudaEventRecord(stopEnc));
 
         cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
 
-        cudaCheck(cudaStreamSynchronize(0));
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(stopCopyAndEnc);
+        cudaCheck(cudaEventRecord(stopCopyAndEnc));
         
-        cudaCheck(cudaFree(dev_keys.get()));
-        cudaCheck(cudaFree(dev_blocks.get()));
+        cudaCheck(cudaGetLastError());
 
         //std::cout << "Data after encrypt: " << data.data() << std::endl;
     }
     else {
         //std::cout << "Data before decrypt: " << data.data() << std::endl;
 
-        cudaEventRecord(startCopyAndEnc);
+        cudaCheck(cudaEventRecord(startCopyAndEnc));
 
         cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
 
         cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(startEnc);
+        cudaCheck(cudaEventRecord(startEnc));
 
         decrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(stopEnc);
+        cudaCheck(cudaEventRecord(stopEnc));
+
+        cudaCheck(cudaGetLastError());
 
         cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
 
-        cudaCheck(cudaStreamSynchronize(0));
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(stopCopyAndEnc);
-        cudaCheck(cudaFree(dev_keys.get()));
-        cudaCheck(cudaFree(dev_blocks.get()));
+        cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+        cudaCheck(cudaGetLastError());
 
         //std::cout << "Data after decrypt: " << data.data() << std::endl;
     }
 
-    cudaEventSynchronize(stopEnc);
-    cudaEventSynchronize(stopCopyAndEnc);
+    cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
+    cudaCheck(cudaGetLastError());
     cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
     cudaEventElapsedTime(&time[1], startEnc, stopEnc);
 
     return time;
 }
 
-std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
     std::vector<float> time{ 0, 0 };
 
+    const size_t countBlocks = data.size();
     const size_t dataSize = countBlocks * 8;
 
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
-    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc_async<magmaBlockT[]>(countBlocks);
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(countBlocks);
 
     cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
-    cudaEventCreate(&startEnc);
-    cudaEventCreate(&stopEnc);
-    cudaEventCreate(&startCopyAndEnc);
-    cudaEventCreate(&stopCopyAndEnc);  
+    cudaCheck(cudaEventCreate(&startEnc));
+    cudaCheck(cudaEventCreate(&stopEnc));
+    cudaCheck(cudaEventCreate(&startCopyAndEnc));
+    cudaCheck(cudaEventCreate(&stopCopyAndEnc)); 
 
     if (encryptStatus) {
 
         //std::cout << "Data before encrypt: " << data.data() << std::endl;
         
-        
         cudaCheck(cudaEventRecord(startCopyAndEnc));
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
         cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+
+        cudaCheck(cudaGetLastError());
         cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
 
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(startEnc);
+        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+        cudaCheck(cudaGetLastError());
+
+        cudaCheck(cudaEventRecord(startEnc));
 
         encrypt <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
-        //cudaCheck(cudaGetLastError());
+        cudaCheck(cudaGetLastError());
 
-        cudaEventRecord(stopEnc);
+        cudaCheck(cudaEventRecord(stopEnc));
 
         cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+        cudaCheck(cudaStreamSynchronize(0));
 
         //if (blocks != out_blocks)
         cudaCheck(cudaHostUnregister((void*)data.data()));
 
-        cudaCheck(cudaStreamSynchronize(0));
-
-        cudaCheck(cudaFree(dev_keys.get()));
-        cudaCheck(cudaFree(dev_blocks.get()));
-
-        cudaEventRecord(stopCopyAndEnc);
+        cudaCheck(cudaEventRecord(stopCopyAndEnc));
 
         //std::cout << "Data after encrypt: " << data.data() << std::endl;
     }
     else {
         //std::cout << "Data before decrypt: " << data.data() << std::endl;
 
-        cudaEventRecord(startCopyAndEnc);
+        cudaCheck(cudaEventRecord(startCopyAndEnc));
 
         cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
         cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
@@ -529,12 +537,10 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
         cudaEventRecord(stopCopyAndEnc);
 
         //std::cout << "Data after decrypt: " << data.data() << std::endl;
-        cudaCheck(cudaFree(dev_keys.get()));
-        cudaCheck(cudaFree(dev_blocks.get()));
     }
 
-    cudaEventSynchronize(stopEnc);
-    cudaEventSynchronize(stopCopyAndEnc);
+    //cudaEventSynchronize(stopEnc);
+    cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
     cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
     cudaEventElapsedTime(&time[1], startEnc, stopEnc);
 
@@ -543,66 +549,84 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     return time;
 }
 
-std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size_t countBlocks, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
     std::vector<float> time { 0, 0 };
     magmaBlockT* buffer;
 
-    magmaKeySet* keys;
+    const size_t countBlocks = data.size();
 
-    size_t dataSize = countBlocks * 8;
+    cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
+
+    size_t dataSize = countBlocks * sizeof(magmaBlockT);
 
     cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
-    cudaEventCreate(&startEnc);
-    cudaEventCreate(&stopEnc);
-    cudaEventCreate(&startCopyAndEnc);
-    cudaEventCreate(&stopCopyAndEnc);
+    cudaCheck(cudaEventCreate(&startEnc));
+    cudaCheck(cudaEventCreate(&stopEnc));
+    cudaCheck(cudaEventCreate(&startCopyAndEnc));
+    cudaCheck(cudaEventCreate(&stopCopyAndEnc));
 
-    cudaEventRecord(startCopyAndEnc);
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
     
-    cudaCheck(cudaMallocManaged(&keys, sizeof(magmaKeySet)));
+    //cudaCheck(cudaMallocManaged(&keys, sizeof(magmaKeySet)));
     cudaCheck(cudaMallocManaged(&buffer, dataSize));
 
     //buffer->resize(countBlocks);
     //buffer = data;
 
-    std::copy(this->keys.keys, this->keys.keys + 32, keys->keys);
-    std::copy(data.data(), data.data() + countBlocks, buffer);
+    //std::copy(this->keys.keys, this->keys.keys + 32, keys->keys);
+    //std::copy(data.data(), data.data() + countBlocks, buffer);
+
+    cudaCheck(cudaEventRecord(startCopyAndEnc));
+    cudaCheck(cudaMemcpyAsync(buffer, data.data(), dataSize, cudaMemcpyHostToHost));
+
+    cudaCheck(cudaGetLastError());
 
     //std::cout << "Buffer: " << buffer << std::endl;
 
     if (encryptStatus) {
-        cudaEventRecord(startEnc);
+        cudaCheck(cudaEventRecord(startEnc));
 
-        encrypt <<< blockSize, gridSize >>> (*keys, buffer, countBlocks);
+        encrypt <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);
 
-        cudaEventRecord(stopEnc);
+        cudaCheck(cudaGetLastError());
 
-        cudaCheck(cudaDeviceSynchronize());
+        cudaCheck(cudaEventRecord(stopEnc));
+
+        //cudaCheck(cudaDeviceSynchronize());
     }
     else {
 
-        cudaEventRecord(startEnc);
+        cudaCheck(cudaEventRecord(startEnc));
 
-        decrypt <<< blockSize, gridSize >>> (*keys, buffer, countBlocks);
+        decrypt <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);
 
-        cudaEventRecord(stopEnc);
+        cudaCheck(cudaGetLastError());
 
-        cudaCheck(cudaDeviceSynchronize());
+        cudaCheck(cudaEventRecord(stopEnc));
+
+        //cudaCheck(cudaDeviceSynchronize());
     }
 
     //std::cout << "After Decrypt. Buffer: " << buffer->data()<< std::endl;
 
-    std::copy(buffer, buffer + countBlocks, data.data());
+    //std::copy(buffer, buffer + countBlocks, data.data());
+    cudaCheck(cudaMemcpyAsync(data.data(), buffer, dataSize, cudaMemcpyHostToHost));
 
-    cudaCheck(cudaFree(keys));
-    cudaCheck(cudaFree(buffer));
+    cudaCheck(cudaEventRecord(stopCopyAndEnc));
 
-    cudaEventRecord(stopCopyAndEnc);
-
-    cudaEventSynchronize(stopEnc);
-    cudaEventSynchronize(stopCopyAndEnc);
+    //cudaEventSynchronize(stopEnc);
+    cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
     cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
     cudaEventElapsedTime(&time[1], startEnc, stopEnc);
 
+    //cudaEventDestroy()
+
+    //cudaCheck(cudaFree(keys));
+    cudaCheck(cudaFree(buffer));
+
     return time;
 }
+
+//cudaEventRecord()
+//sleep(10)
+//cudaEventRecord()

@@ -29,7 +29,7 @@ void readFile(const std::string path, std::vector<magmaBlockT>& result) {
         count += 8;
     }
 
-    buffer.~vector();
+    //buffer.~vector();
     //return result;
 }
 
@@ -79,19 +79,19 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
 
         replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
 
-        tempTimeRes.time = testMagma.testDefault(buffer, buffer.size(), 16, 16, true);
+        tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, true);
 
         timeVector.push_back(tempTimeRes);
 
         replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
 
-        tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, true);
+        tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, true);
 
         timeVector.push_back(tempTimeRes);
 
         replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
 
-        tempTimeRes.time = testMagma.testManaged(buffer, buffer.size(), 16, 16, true);
+        tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, true);
 
         timeVector.push_back(tempTimeRes);
 
@@ -107,19 +107,20 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
 
         replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
 
-        tempTimeRes.time = testMagma.testManaged(buffer, buffer.size(), 16, 16, false);
+        tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, false);
 
         timeVector.push_back(tempTimeRes);
 
         replaceTimeRes(tempTimeRes, newPath, "testPinned", false, i);
 
-        tempTimeRes.time = testMagma.testPinned(buffer, buffer.size(), 16, 16, false);
+        tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, false);
 
         timeVector.push_back(tempTimeRes);
+        
 
         replaceTimeRes(tempTimeRes, newPath, "testDefault", false, i);
 
-        tempTimeRes.time = testMagma.testDefault(buffer, buffer.size(), 16, 16, false);
+        tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, false);
 
         timeVector.push_back(tempTimeRes);
 
@@ -132,6 +133,7 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
         }
         fileDec.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
         fileDec.close();
+        
 
         newPath.clear();
         
