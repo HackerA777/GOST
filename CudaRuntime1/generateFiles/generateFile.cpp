@@ -30,7 +30,7 @@ bool generateFile::generate(const std::string& path) {
         size_t inputFileSize = inputFile.tellg();      // Получаем размер файла
         inputFile.seekg(0, std::ios::beg);
 
-        if (inputFileSize >= 8) {
+        if (inputFileSize == s) {
             inputFile.close();
             newPath.clear();
             continue;
