@@ -105,7 +105,7 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
         file.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
         file.close();
 
-        replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
+        /*replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
 
         tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, false);
 
@@ -133,7 +133,7 @@ void testSpeed(const std::string& path, const std::vector<size_t> range, const s
         }
         fileDec.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
         fileDec.close();
-        
+        */
 
         newPath.clear();
         

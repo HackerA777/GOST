@@ -179,7 +179,7 @@ int main()
 
     for (size_t i = 32; i <= 1024; i *= 2) {
         for (size_t j = 32; j <= 1024; j *= 2) {
-            testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024, 1024 * 1024 * 1024 }, i, j);
+            testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, i, j);
         }
     }
     //testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 16, 64 }, 128, 128);
