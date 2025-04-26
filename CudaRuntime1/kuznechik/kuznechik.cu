@@ -370,17 +370,281 @@ kuznechik::kuznechik(const kuznechikKeys& mainKey, const size_t buffSize, const 
 
 	cuda_ptr<kuznechikKeys> dev_keys = cuda_alloc<kuznechikKeys>();
 	cuda_ptr<kuznechikByteVector> dev_res_keys = cuda_alloc<kuznechikByteVector>(10);
-	cudaError_t cudaStatus;
 
 	cudaCheck(cudaMemcpy(dev_keys.get(), mainKey.bytes, sizeof(kuznechikKeys), cudaMemcpyHostToDevice));
 	cudaCheck(cudaMemcpy(dev_res_keys.get(), roundKeysKuznechik, sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
 	getRoundKeys <<<blockSize, gridSize>>> (*dev_keys, dev_res_keys.get());
 
-	//cudaCheck(cudaGetLastError());
+	cudaCheck(cudaGetLastError());
 	cudaCheck(cudaDeviceSynchronize());
 
 	cudaCheck(cudaMemcpy(this->roundKeysKuznechik, dev_res_keys.get(), 10 * sizeof(kuznechikByteVector), cudaMemcpyDeviceToHost));
-	cudaFree(dev_keys.get());
+	//cudaFree(dev_keys.get());
 	//cudaCheck(cudaGetLastError());
 }
+
+std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+	cudaCheck(cudaGetLastError());
+	std::vector<float> time{ 0, 0 };
+
+	const size_t countBlocks = data.size();
+	std::cout << "countBlock: " << countBlocks << std::endl;
+	const size_t dataSize = countBlocks * sizeof(kuznechikByteVector);
+
+	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
+	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
+
+	cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
+	cudaCheck(cudaEventCreate(&startEnc));
+	cudaCheck(cudaEventCreate(&stopEnc));
+	cudaCheck(cudaEventCreate(&startCopyAndEnc));
+	cudaCheck(cudaEventCreate(&stopCopyAndEnc));
+
+	if (encryptStatus) {
+
+		//std::cout << "Data before encrypt: " << data.data() << std::endl;
+
+		cudaCheck(cudaEventRecord(startCopyAndEnc));
+		//_Thrd_sleep_for(10000);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(startEnc));
+
+		cudaCheck(cudaGetLastError());
+
+		encryptOneBlock <<< blockSize, gridSize >>> (dev_blocks.get(), dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+
+		cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+		cudaCheck(cudaGetLastError());
+
+		//std::cout << "Data after encrypt: " << data.data() << std::endl;
+	}
+	else {
+		//std::cout << "Data before decrypt: " << data.data() << std::endl;
+
+		cudaCheck(cudaEventRecord(startCopyAndEnc));
+
+		cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(startEnc));
+
+		decryptOneBlock << <blockSize, gridSize >> > (dev_blocks.get(), dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+		cudaCheck(cudaGetLastError());
+
+		//std::cout << "Data after decrypt: " << data.data() << std::endl;
+	}
+
+	cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
+	cudaCheck(cudaGetLastError());
+	cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
+	cudaEventElapsedTime(&time[1], startEnc, stopEnc);
+
+	cudaCheck(cudaEventDestroy(startCopyAndEnc));
+	cudaCheck(cudaEventDestroy(stopCopyAndEnc));
+	cudaCheck(cudaEventDestroy(startEnc));
+	cudaCheck(cudaEventDestroy(stopEnc));
+
+	return time;
+}
+
+std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+	std::vector<float> time{ 0, 0 };
+
+	const size_t countBlocks = data.size();
+	const size_t dataSize = countBlocks * sizeof(kuznechikByteVector);
+
+	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
+	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
+
+	cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
+	cudaCheck(cudaEventCreate(&startEnc));
+	cudaCheck(cudaEventCreate(&stopEnc));
+	cudaCheck(cudaEventCreate(&startCopyAndEnc));
+	cudaCheck(cudaEventCreate(&stopCopyAndEnc));
+
+	if (encryptStatus) {
+
+		//std::cout << "Data before encrypt: " << data.data() << std::endl;
+
+		cudaCheck(cudaEventRecord(startCopyAndEnc));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+
+		cudaCheck(cudaGetLastError());
+		cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(startEnc));
+
+		encryptOneBlock <<< blockSize, gridSize >>> (dev_blocks.get(), dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+
+		cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+		cudaCheck(cudaStreamSynchronize(0));
+
+		//if (blocks != out_blocks)
+		cudaCheck(cudaHostUnregister((void*)data.data()));
+
+		cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+		//std::cout << "Data after encrypt: " << data.data() << std::endl;
+	}
+	else {
+		//std::cout << "Data before decrypt: " << data.data() << std::endl;
+
+		cudaCheck(cudaEventRecord(startCopyAndEnc));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+		cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(startEnc));
+
+		decryptOneBlock <<< blockSize, gridSize >>> (dev_blocks.get(), dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+
+		cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaHostUnregister((void*)data.data()));
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaStreamSynchronize(0));
+
+		cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+		//std::cout << "Data after decrypt: " << data.data() << std::endl;
+	}
+
+	cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
+	cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
+	cudaEventElapsedTime(&time[1], startEnc, stopEnc);
+
+	cudaCheck(cudaEventDestroy(startCopyAndEnc));
+	cudaCheck(cudaEventDestroy(stopCopyAndEnc));
+	cudaCheck(cudaEventDestroy(startEnc));
+	cudaCheck(cudaEventDestroy(stopEnc));
+
+	//cudaCheck(cudaHostUnregister((void*)out_blocks));
+
+	return time;
+}
+
+std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
+	std::vector<float> time{ 0, 0 };
+	kuznechikByteVector* buffer;
+
+	const size_t countBlocks = data.size();
+
+	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
+
+	size_t dataSize = countBlocks * sizeof(kuznechikByteVector);
+
+	cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
+	cudaCheck(cudaEventCreate(&startEnc));
+	cudaCheck(cudaEventCreate(&stopEnc));
+	cudaCheck(cudaEventCreate(&startCopyAndEnc));
+	cudaCheck(cudaEventCreate(&stopCopyAndEnc));
+
+	cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+
+	cudaCheck(cudaMallocManaged(&buffer, dataSize));
+
+	cudaCheck(cudaEventRecord(startCopyAndEnc));
+	cudaCheck(cudaMemcpyAsync(buffer, data.data(), dataSize, cudaMemcpyHostToHost));
+
+	cudaCheck(cudaGetLastError());
+
+	//std::cout << "Buffer: " << buffer << std::endl;
+
+	if (encryptStatus) {
+		cudaCheck(cudaEventRecord(startEnc));
+
+		encryptOneBlock <<< blockSize, gridSize >>> (buffer, dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+	}
+	else {
+
+		cudaCheck(cudaEventRecord(startEnc));
+
+		decryptOneBlock <<< blockSize, gridSize >>> (buffer, dev_keys.get(), countBlocks);
+
+		cudaCheck(cudaGetLastError());
+
+		cudaCheck(cudaEventRecord(stopEnc));
+	}
+
+	//std::cout << "After Decrypt. Buffer: " << buffer->data()<< std::endl;
+
+	cudaCheck(cudaMemcpyAsync(data.data(), buffer, dataSize, cudaMemcpyHostToHost));
+
+	cudaCheck(cudaEventRecord(stopCopyAndEnc));
+
+	cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
+	cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
+	cudaEventElapsedTime(&time[1], startEnc, stopEnc);
+
+	cudaCheck(cudaEventDestroy(startCopyAndEnc));
+	cudaCheck(cudaEventDestroy(stopCopyAndEnc));
+	cudaCheck(cudaEventDestroy(startEnc));
+	cudaCheck(cudaEventDestroy(stopEnc));
+
+	cudaCheck(cudaFree(buffer));
+
+	return time;
+}
+
