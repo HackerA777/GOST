@@ -9,6 +9,9 @@
     <CudaCompile Include="magma\magma.cu">
       <Filter>magma</Filter>
     </CudaCompile>
+    <CudaCompile Include="tests\tests.cu">
+      <Filter>tests</Filter>
+    </CudaCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="kuznechik">
@@ -26,6 +29,9 @@
     <Filter Include="testSpeed">
       <UniqueIdentifier>{76fef6f9-1c41-4c05-b099-214660cda388}</UniqueIdentifier>
     </Filter>
+    <Filter Include="tests">
+      <UniqueIdentifier>{4af88ae7-8dd2-48c8-aa93-0847558280ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="kuznechik\kuznechik.cuh">
@@ -42,6 +48,9 @@
     </ClInclude>
     <ClInclude Include="testSpeed\testSpeed.h">
       <Filter>testSpeed</Filter>
+    </ClInclude>
+    <ClInclude Include="tests\tests.cuh">
+      <Filter>tests</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

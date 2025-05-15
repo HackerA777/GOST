@@ -1,6 +1,7 @@
 #include "./magma/magma.cuh"
 #include "./kuznechik/kuznechik.cuh"
 #include "./testSpeed/testSpeed.h"
+#include "./tests/tests.cuh"
 #include <Windows.h>
 #include <fstream>
 
@@ -45,15 +46,14 @@ int main()
         0x10, 0x32, 0x54, 0x76, 0x98, 0xba, 0xdc, 0xfe
     };
 
-    //magmaBlockT t;
-    //std::vector<magmaBlockT> tVector(2);
-    //
-    //std::copy(testString, testString + 8, t.bytes);
+    magmaBlockT t;
+    std::vector<magmaBlockT> tVector(2);
+    
+    std::copy(testString, testString + 8, t.bytes);
     //std::copy(testString, testString + 8, tVector[0].bytes);
     //std::copy(testString, testString + 8, tVector[1].bytes);
-    //tVector.push_back(t);
-    //tVector.push_back(t);
-    //std::copy(t.bytes, t.bytes + 8, tPtr->bytes);
+    tVector.push_back(t);
+    tVector.push_back(t);
 
     //std::span<magmaBlockT> testBlock(t);
     //testBlock.data()->bytes = t.bytes;
@@ -68,23 +68,26 @@ int main()
 
     //std::cout << "test copy: " << *tPtr << std::endl;
 
-    /*std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
+    // std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
+    //magmaKeySet magmaKeys;
+    //std::copy(keys, keys + 32, magmaKeys.keys->bytes);
+    //std::vector<float> timeDefault;
 
-    std::vector<float> timeDefault;
+    //timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, true);
+    
 
-    timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, true);
+    // std::cout << "\ntime dafault: ";
+    // for (auto time : timeDefault) {
+    //  std::cout << time << "; ";
+    // }
+    // std::cout << "milisecond" << std::endl;
 
-    std::cout << "\ntime dafault: ";
-    for (auto time : timeDefault) {
-        std::cout << time << "; ";
-    }
-    std::cout << "milisecond" << std::endl;
+    //std::cout << tVector[0] << " : " << tVector[1] << std::endl;
 
-    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    // timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, false);
+    // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
 
-    timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, false);
-
-    std::cout << "\ntime default: ";
+    /*std::cout << "\ntime default: ";
     for (auto time : timeDefault) {
         std::cout << time << "; ";
     }
@@ -185,9 +188,6 @@ int main()
     }*/
     //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024
     testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
-
-    //int answer;
-    //std::cin >> answer;
 
     return 0;
 }

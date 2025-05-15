@@ -84,6 +84,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <CudaCompile Include="getInfoOfDevice.cu" />
+    <CudaCompile Include="tests\tests.cu" />
   </ItemGroup>
   <ItemGroup>
     <CudaCompile Include="kuznechik\kuznechik.cu" />
@@ -96,6 +97,7 @@
     <ClInclude Include="magma\magma.cuh" />
     <ClInclude Include="structures\structures.cuh" />
     <ClInclude Include="testSpeed\testSpeed.h" />
+    <ClInclude Include="tests\tests.cuh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="generateFiles\generateFile.cpp" />
