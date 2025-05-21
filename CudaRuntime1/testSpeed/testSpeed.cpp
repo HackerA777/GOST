@@ -1,7 +1,6 @@
 #include "./testSpeed.h"
 
 void readFileMagma(const std::string path, std::vector<magmaBlockT>& result) {
-    std::cout << "Opening file: " << path << std::endl;
     std::ifstream inputFile(path, std::ios::binary);
     if (!inputFile) {
         std::cerr << "Error opening file: " << path << std::endl;
@@ -91,7 +90,7 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
 
 	generateFile generateFileForTestSpeed(range, 8);
     if (generateFileForTestSpeed.generate(path)) {
-        std::cout << "create files successful" << std::endl;
+        //std::cout << "create files successful" << std::endl;
     }
     else {
         std::cout << "create files error" << std::endl;
@@ -170,11 +169,16 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
         
         buffer.clear();
     }
-
+    //std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
     for (auto elem : timeVector) {
-        std::cout << elem.testName << ": size: " << elem.size / 1024 /1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
-        std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
-        std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
+        //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
+        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
+        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
+
+        /*std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << blockSize << ";" << gridSize << ";" <<
+            (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;*/
+        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << blockSize << ";" << gridSize << ";" <<
+            (elem.size / 1000.0 / 1000 / 1000) / (elem.time[0] / 1000) * 8 << ";" << (elem.size / 1000.0 / 1000 / 1000) / (elem.time[1] / 1000) * 8 << std::endl;
     }
 }
 
@@ -277,7 +281,7 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
         buffer.clear();
     }
 
-    std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
+    //std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
         //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;

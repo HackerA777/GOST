@@ -174,20 +174,27 @@ int main()
 
     // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
-    // kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
+    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
-    // kuznechikElement.checkEcnAndDec();
+    kuznechikElement.checkEcnAndDec();
 
     //kuznechikElement.testSpeedUnequalBytes();
-    //kuznechikElement.searchBestBlockAndGridSize();
+    //kuznechikElement.searchBestBlockAndGridSize();Ну
 
     /*for (size_t i = 32; i <= 1024; i *= 2) {
         for (size_t j = 32; j <= 1024; j *= 2) {
             testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, i, j);
         }
     }*/
-    //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024
-    testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    //std::cout << "Magma results: " << std::endl;
+    std::cout << "test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
+    //for (int i = 0; i < 10; ++i) {
+        //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    //}
+    //std::cout << "\Kuznechik results: " << std::endl;
+    //for (int i = 0; i < 10; ++i) {
+    testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 512 * 1024 * 1024, 1024 * 1024 * 1024 }, 256, 256);
+    //}
 
     return 0;
 }

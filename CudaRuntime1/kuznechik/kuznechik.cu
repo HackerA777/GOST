@@ -99,10 +99,10 @@ __device__ kuznechikByteVector XOR(const kuznechikByteVector src1, const kuznech
 	return kuznechikByteVector(src1.halfsData.lo.halfVector ^ src2.halfsData.lo.halfVector, src1.halfsData.hi.halfVector ^ src2.halfsData.hi.halfVector);
 }
 
-__device__ kuznechikByteVector transformationS(const kuznechikByteVector src) {
+__device__ kuznechikByteVector transformationS(const kuznechikByteVector src, const uint8_t* table) {
 	kuznechikByteVector tmp{};
 	for (size_t i = 0; i < 16; i++) {
-		tmp.bytes[i] = sTable[src.bytes[i]];
+		tmp.bytes[i] = table[src.bytes[i]];
 	}
 	return tmp;
 }
@@ -136,7 +136,7 @@ __device__ kuznechikByteVector transformaionL(const kuznechikByteVector& inData)
 __device__ kuznechikByteVector transformationF(const kuznechikByteVector src, const kuznechikByteVector cons) {
 	kuznechikByteVector tmp;
 	tmp = XOR(src, cons);
-	tmp = transformationS(tmp);
+	tmp = transformationS(tmp, sTable);
 	kuznechikByteVector d;
 	d = transformaionL(tmp);
 	return d;
@@ -216,13 +216,22 @@ __device__ kuznechikByteVector revTransformationL(const kuznechikByteVector& inD
 }
 
 __global__ void encryptKuz(const kuznechikByteVector * roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
+	__shared__ uint8_t t[256];
+
+	for (auto k = threadIdx.x; k < 256; k += blockDim.x) {
+		t[k] = sTable[k];
+	}
+	__syncthreads();
+
 	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	tid = blockDim.x * blockIdx.x + threadIdx.x;
 	auto tcnt = gridDim.x * blockDim.x;
+
 	for (auto i = tid; i < count; i += tcnt) {
 		kuznechikByteVector temp = src[i];
 		for (int j = 0; j < 9; ++j) {
 			temp = XOR(temp, roundKeysKuznechik[j]);
-			temp = transformationS(temp);
+			temp = transformationS(temp, t);
 			temp = transformaionL(temp);
 		}
 		src[i] = XOR(temp, roundKeysKuznechik[9]);
@@ -231,6 +240,7 @@ __global__ void encryptKuz(const kuznechikByteVector * roundKeysKuznechik, kuzne
 
 __global__ void decryptKuz(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
 	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	tid = blockDim.x * blockIdx.x + threadIdx.x;
 	auto tcnt = gridDim.x * blockDim.x;
 	for (auto i = tid; i < count; i += tcnt) {
 		kuznechikByteVector temp = XOR(src[i], roundKeysKuznechik[9]);
@@ -396,13 +406,13 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 	cudaCheck(cudaEventCreate(&stopEnc));
 	cudaCheck(cudaEventCreate(&startCopyAndEnc));
 	cudaCheck(cudaEventCreate(&stopCopyAndEnc));
+	
+	cudaCheck(cudaMemcpy(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+	cudaCheck(cudaGetLastError());
 
 	if (encryptStatus) {
 		cudaCheck(cudaEventRecord(startCopyAndEnc));
 
-		cudaCheck(cudaGetLastError());
-
-		cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 		cudaCheck(cudaGetLastError());
 
 		cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
