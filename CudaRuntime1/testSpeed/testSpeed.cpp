@@ -183,12 +183,6 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
         
         buffer.clear();
     }
-    //std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
-    for (auto elem : timeVector) {
-        //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
-        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
-        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
-
     std::cout << "Name test;size;enc;blockSize;gridSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
@@ -207,8 +201,6 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
 }
 
 void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize) {
-    //std::vector<size_t> range{ 1*1024*1024, 1024 * 1024 * 1024};
-    //std::vector<size_t> range{ 16*1024, 32*1024 };
     std::vector<kuznechikByteVector> buffer;
     std::string newPath;
 
@@ -305,7 +297,7 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
         buffer.clear();
     }
 
-    //std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
+    std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
         //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
