@@ -47,7 +47,7 @@ int main()
     std::vector<magmaBlockT> tVector;
     
     std::copy(testString, testString + 8, t.bytes);
-    tVector.push_back(t);
+    //tVector.push_back(t);
     for (int i = 0; i < 2048; ++i) {
         tVector.push_back(t);
     }
@@ -69,9 +69,9 @@ int main()
     const size_t countStreams = 2;
     time.resize(countStreams);
 
-    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
 
-    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 2048, true) << std::endl;    
+    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, true) << std::endl;    
 
     // std::cout << "\ntime dafault: ";
     // for (auto time : timeDefault) {
@@ -79,20 +79,20 @@ int main()
     // }
     // std::cout << "milisecond" << std::endl;
 
-    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
 
-    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 2048, false) << std::endl;
+    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, false) << std::endl;
 
-    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
 
-    timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
+    // timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
     // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
 
-    std::cout << "\ntime default: ";
-    for (auto time : timeDefault) {
-        std::cout << time << "; ";
-    }
-    std::cout << "milisecond" << std::endl;
+    // std::cout << "\ntime default: ";
+    // for (auto time : timeDefault) {
+    //     std::cout << time << "; ";
+    // }
+    // std::cout << "milisecond" << std::endl;
 
     /*std::cout << tVector[0] << " : " << tVector[1] << std::endl;
 
@@ -187,7 +187,7 @@ int main()
             testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, i, j);
         }
     }*/
-    testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
+    //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
     //testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
 
     return 0;
