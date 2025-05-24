@@ -591,7 +591,7 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
             flags[streamId] = true;
         }
     
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data() + 2 * newCountBlocks * (i / tileSize), newCountBlocks, cudaMemcpyHostToDevice, streams[streamId]));
+        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data() + 2 * bufferSize * (i / tileSize), bufferSize, cudaMemcpyHostToDevice, streams[streamId]));
         cudaCheck(cudaGetLastError());
     
         if (encryptStatus) {
@@ -603,7 +603,7 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
     
         cudaCheck(cudaGetLastError());
     
-        cudaCheck(cudaMemcpyAsync(data.data() + 2 * newCountBlocks * (i / tileSize), dev_blocks.get(), newCountBlocks, cudaMemcpyDeviceToHost, streams[streamId]));
+        cudaCheck(cudaMemcpyAsync(data.data() + 2 * bufferSize * (i / tileSize), dev_blocks.get(), bufferSize, cudaMemcpyDeviceToHost, streams[streamId]));
 
         streamId = (streamId + 1) % countStreams;
     }

@@ -69,7 +69,7 @@ int main()
     const size_t countStreams = 2;
     time.resize(countStreams);
 
-    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, true) << std::endl;    
 
@@ -79,11 +79,11 @@ int main()
     // }
     // std::cout << "milisecond" << std::endl;
 
-    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, false) << std::endl;
 
-    std::cout << tVector[8] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     // timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
     // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
