@@ -379,71 +379,38 @@ std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size
     cudaCheck(cudaEventCreate(&startCopyAndEnc));
     cudaCheck(cudaEventCreate(&stopCopyAndEnc));
 
+    cudaCheck(cudaEventRecord(startCopyAndEnc));
+
+    cudaCheck(cudaGetLastError());
+        
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaEventRecord(startEnc));
+
+    cudaCheck(cudaGetLastError());
+
     if (encryptStatus) {
-
-        //std::cout << "Data before encrypt: " << data.data() << std::endl;
-
-        cudaCheck(cudaEventRecord(startCopyAndEnc));
-        //_Thrd_sleep_for(10000);
-
-        cudaCheck(cudaGetLastError());
-        
-        cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(startEnc));
-
-        cudaCheck(cudaGetLastError());
-
-        encryptMgm <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
-
-        cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopCopyAndEnc));
-        
-        cudaCheck(cudaGetLastError());
-
-        //std::cout << "Data after encrypt: " << data.data() << std::endl;
+        encryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
     else {
-        //std::cout << "Data before decrypt: " << data.data() << std::endl;
-
-        cudaCheck(cudaEventRecord(startCopyAndEnc));
-
-        cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
-
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(startEnc));
-
-        decryptMgm <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopCopyAndEnc));
-
-        cudaCheck(cudaGetLastError());
-
-        //std::cout << "Data after decrypt: " << data.data() << std::endl;
+        decryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
+
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaEventRecord(stopEnc));
+
+    cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaEventRecord(stopCopyAndEnc));
+        
+    cudaCheck(cudaGetLastError());
 
     cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
     cudaCheck(cudaGetLastError());
@@ -472,77 +439,40 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     cudaCheck(cudaEventCreate(&stopEnc));
     cudaCheck(cudaEventCreate(&startCopyAndEnc));
     cudaCheck(cudaEventCreate(&stopCopyAndEnc)); 
+        
+    cudaCheck(cudaEventRecord(startCopyAndEnc));
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+
+    cudaCheck(cudaGetLastError());
+    cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
+
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaEventRecord(startEnc));
 
     if (encryptStatus) {
-
-        //std::cout << "Data before encrypt: " << data.data() << std::endl;
-        
-        cudaCheck(cudaEventRecord(startCopyAndEnc));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
-
-        cudaCheck(cudaGetLastError());
-        cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(startEnc));
-
-        encryptMgm <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
-
-        cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
-
-        cudaCheck(cudaStreamSynchronize(0));
-
-        //if (blocks != out_blocks)
-        cudaCheck(cudaHostUnregister((void*)data.data()));
-
-        cudaCheck(cudaEventRecord(stopCopyAndEnc));
-
-        //std::cout << "Data after encrypt: " << data.data() << std::endl;
+        encryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
     else {
-        //std::cout << "Data before decrypt: " << data.data() << std::endl;
-
-        cudaCheck(cudaEventRecord(startCopyAndEnc));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
-        cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
-
-        cudaCheck(cudaGetLastError());
-        
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(startEnc));
-
-        decryptMgm <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
-
-        cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaHostUnregister((void*)data.data()));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaStreamSynchronize(0));
-
-        cudaCheck(cudaEventRecord(stopCopyAndEnc));
-
-        //std::cout << "Data after decrypt: " << data.data() << std::endl;
+        decryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
+
+    cudaCheck(cudaGetLastError());
+
+    cudaCheck(cudaEventRecord(stopEnc));
+
+    cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost));
+
+    cudaCheck(cudaStreamSynchronize(0));
+
+    cudaCheck(cudaHostUnregister((void*)data.data()));
+
+    cudaCheck(cudaEventRecord(stopCopyAndEnc));
 
     cudaCheck(cudaEventSynchronize(stopCopyAndEnc));
     cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
@@ -552,8 +482,6 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     cudaCheck(cudaEventDestroy(stopCopyAndEnc));
     cudaCheck(cudaEventDestroy(startEnc));
     cudaCheck(cudaEventDestroy(stopEnc));
-
-    //cudaCheck(cudaHostUnregister((void*)out_blocks));
 
     return time;
 }
@@ -582,30 +510,17 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
     cudaCheck(cudaMemcpyAsync(buffer, data.data(), dataSize, cudaMemcpyHostToHost));
 
     cudaCheck(cudaGetLastError());
-
-    //std::cout << "Buffer: " << buffer << std::endl;
+    cudaCheck(cudaEventRecord(startEnc));
 
     if (encryptStatus) {
-        cudaCheck(cudaEventRecord(startEnc));
-
-        encryptMgm <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
+        encryptMgm <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);        
     }
     else {
-
-        cudaCheck(cudaEventRecord(startEnc));
-
         decryptMgm <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);
-
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaEventRecord(stopEnc));
     }
 
-    //std::cout << "After Decrypt. Buffer: " << buffer->data()<< std::endl;
+    cudaCheck(cudaGetLastError());
+    cudaCheck(cudaEventRecord(stopEnc));
 
     cudaCheck(cudaMemcpyAsync(data.data(), buffer, dataSize, cudaMemcpyHostToHost));
 
@@ -625,20 +540,19 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
     return time;
 }
 
-int magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus) {
-    std::vector<float> time{ 0, 0 };
+double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t tileSize, const bool encryptStatus) {
 
-    const size_t TILE_SIZE = 1024;
-    const size_t NUM_STREAMS = 2; // сделать входящими аргументами
-
-    std::vector<cudaStream_t> streams[NUM_STREAMS]; // std::vector<cudaStream_t>
-    // cudaEvent_t events[NUM_STREAMS]; // std::vector
-    std::vector<cudaEvent_t> startEvents[NUM_STREAMS];
-    std::vector<cudaEvent_t> stopEvents[NUM_STREAMS];
-    std::vector<bool> flags[NUM_STREAMS] {};
-    // cudaEvent_t startEvents[NUM_STREAMS];
-    // cudaEvent_t stopEvents[NUM_STREAMS];
-    // bool flags[NUM_STREAMS] {};
+    std::vector<cudaStream_t> streams;
+    streams.resize(countStreams); // std::vector<cudaStream_t>
+    std::vector<cudaEvent_t> startEvents;
+    startEvents.resize(countStreams);
+    std::vector<cudaEvent_t> stopEvents;
+    stopEvents.resize(countStreams);
+    std::vector<bool> flags;
+    flags.resize(countStreams);
+    for (int i = 0; i < countStreams; ++i) {
+        flags[i] = false;
+    }
 
     const size_t countBlocks = data.size();
     const size_t dataSize = countBlocks * 8;
@@ -646,94 +560,74 @@ int magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, c
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
     cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(countBlocks);
 
-    //cudaEvent_t startEnc, stopEnc, startCopyAndEnc, stopCopyAndEnc;
-    //cudaCheck(cudaEventCreate(&startEnc));
-    //cudaCheck(cudaEventCreate(&stopEnc));
-    //cudaCheck(cudaEventCreate(&startCopyAndEnc));
-    //cudaCheck(cudaEventCreate(&stopCopyAndEnc));
-
-    if (encryptStatus) {
-
-        //std::cout << "Data before encrypt: " << data.data() << std::endl;
-
-        //cudaCheck(cudaEventRecord(startCopyAndEnc));
-        cudaCheck(cudaGetLastError());
-
-        cudaCheck(cudaMemcpyAsync(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice)); // cudaMemcpy
-
-        cudaCheck(cudaGetLastError());
-        cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
-
-        cudaCheck(cudaGetLastError());
-
-        for (int i = 0; i < NUM_STREAMS; ++i) {
-            cudaCheck(cudaStreamCreate(&streams[0][i]));
-            cudaCheck(cudaEventCreate(&startEvents[0][i]));
-            cudaCheck(cudaEventCreate(&stopEvents[0][i]));
-            // выделение памяти
-        }
-
-        for (int i = 0; i < countBlocks; i += TILE_SIZE) {
-            int streamId = i % NUM_STREAMS;
-            int offset = i;
-            
-            if (offset > countBlocks) // delete
-                break;
-
-            if (!flags[0][streamId]) {
-                cudaCheck(cudaEventRecord(startEvents[0][streamId]));
-                flags[0][streamId] = true;
-            }
-
-            cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice, streams[0][streamId]));
-            cudaCheck(cudaGetLastError());
-
-            //cudaCheck(cudaEventRecord(startEnc));
-            if (encryptStatus) {
-                encryptMgm <<< blockSize, gridSize, 0, streams[0][streamId] >> > (*dev_keys, dev_blocks.get(), countBlocks);
-            }
-            else {
-                decryptMgm <<< blockSize, gridSize, 0, streams[0][streamId] >> > (*dev_keys, dev_blocks.get(), countBlocks);
-            }
-
-            cudaCheck(cudaGetLastError());
-
-            // cudaCheck(cudaEventRecord(stopEnc));
-
-            cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost, streams[0][streamId]));
-
-            // cudaCheck(cudaStreamSynchronize(0));
-
-            //if (blocks != out_blocks)
-
-            // cudaCheck(cudaEventRecord(stopCopyAndEnc));
-        }
-
-        for (int i = 0; i < NUM_STREAMS; ++i) {
-            cudaCheck(cudaEventRecord(stopEvents[0][i]));
-        }
-
-        for (int i = 0; i < NUM_STREAMS; ++i) {
-            cudaCheck(cudaEventSynchronize(stopEvents[0][i]));
-        }
-
-        cudaCheck(cudaHostUnregister((void*)data.data()));
-
-        // max time in all time combinated
-
-        for (int i = 0; i < NUM_STREAMS; ++i) {
-            cudaCheck(cudaStreamDestroy(streams[0][i]));
-            cudaCheck(cudaEventDestroy(startEvents[0][i]));
-            cudaCheck(cudaEventDestroy(stopEvents[0][i]));
-        }
-
-        //std::cout << "Data after encrypt: " << data.data() << std::endl;
+    cudaCheck(cudaGetLastError());
+    
+    cudaCheck(cudaMemcpy(dev_keys.get(), this->keys.keys, sizeof(magmaKeySet), cudaMemcpyHostToDevice));
+    
+    cudaCheck(cudaGetLastError());
+    cudaCheck(cudaHostRegister((void*)data.data(), dataSize, cudaHostRegisterDefault));
+    
+    cudaCheck(cudaGetLastError());
+    
+    for (int i = 0; i < countStreams; ++i) {
+        cudaCheck(cudaStreamCreate(&streams[i]));
+        cudaCheck(cudaEventCreate(&startEvents[i]));
+        cudaCheck(cudaEventCreate(&stopEvents[i]));
     }
     
-    //cudaEventElapsedTime(&time[0], startCopyAndEnc, stopCopyAndEnc);
-    //cudaEventElapsedTime(&time[1], startEnc, stopEnc);
+    int streamId = 0;
+    for (int i = 0; i < countBlocks; i += tileSize) {
+        int offset = i;
+    
+        if (!flags[streamId]) {
+            cudaCheck(cudaEventRecord(startEvents[streamId]));
+            flags[streamId] = true;
+        }
+    
+        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data(), dataSize, cudaMemcpyHostToDevice, streams[streamId]));
+        cudaCheck(cudaGetLastError());
+    
+        if (encryptStatus) {
+            encryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        }
+        else {
+            decryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        }
+    
+        cudaCheck(cudaGetLastError());
+    
+        cudaCheck(cudaMemcpyAsync(data.data(), dev_blocks.get(), dataSize, cudaMemcpyDeviceToHost, streams[streamId]));
 
-    return 0;
+        streamId = (streamId + 1) % countStreams;
+    }
+    
+    for (int i = 0; i < countStreams; ++i) {
+        cudaCheck(cudaEventRecord(stopEvents[i]));
+    }
+    
+    for (int i = 0; i < countStreams; ++i) {
+        cudaCheck(cudaEventSynchronize(stopEvents[i]));
+    }
+    
+    cudaCheck(cudaHostUnregister((void*)data.data()));
+    
+    float maxTime = 0;
+    float currentTime = 0;
+    for (int i = 0; i < countStreams; ++i) {
+        for (int j = 0; j < countStreams; ++j) {
+            if (flags[i] && flags[j])
+            cudaCheck(cudaEventElapsedTime(&currentTime, startEvents[i], stopEvents[j]));
+            if (currentTime > maxTime) {
+                maxTime = currentTime;
+            }
+        }
+    }
+    
+    for (int i = 0; i < countStreams; ++i) {
+        cudaCheck(cudaStreamDestroy(streams[i]));
+        cudaCheck(cudaEventDestroy(startEvents[i]));
+        cudaCheck(cudaEventDestroy(stopEvents[i]));
+    }
+
+    return maxTime;
 }
-
-

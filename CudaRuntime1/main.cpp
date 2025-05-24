@@ -26,9 +26,6 @@ int main()
     // SetConsoleCP(1251);
     SetConsoleOutputCP(65001);
 
-
-    //cudaDeviceProp prop;
-    //cudaError_t(cudaGetDeviceProperties(&prop, 0));
     const unsigned char keys[32] = {
         0xcc, 0xdd, 0xee, 0xff,
         0x88, 0x99, 0xaa, 0xbb,
@@ -39,7 +36,7 @@ int main()
         0xfb, 0xfa, 0xf9, 0xf8,
         0xff, 0xfe, 0xfd, 0xfc
     };
-    //magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
+    magma magmaElement(keys, 1024 * 1024 * 1024 * 2.0 / sizeof(magmaBlockT), 512, 1024);
     //magmaElement.checkEcnAndDec();
 
     const unsigned char testString[8] = {
@@ -47,18 +44,14 @@ int main()
     };
 
     magmaBlockT t;
-    std::vector<magmaBlockT> tVector(2);
+    std::vector<magmaBlockT> tVector;
     
     std::copy(testString, testString + 8, t.bytes);
-    //std::copy(testString, testString + 8, tVector[0].bytes);
-    //std::copy(testString, testString + 8, tVector[1].bytes);
     tVector.push_back(t);
-    tVector.push_back(t);
-
-    //std::span<magmaBlockT> testBlock(t);
-    //testBlock.data()->bytes = t.bytes;
+    for (int i = 0; i < 2048; ++i) {
+        tVector.push_back(t);
+    }
     
-
     /*std::cout << "Test span: " << std::endl;
 
     for (auto i : testBlock) {
@@ -69,12 +62,16 @@ int main()
     //std::cout << "test copy: " << *tPtr << std::endl;
 
     // std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
-    //magmaKeySet magmaKeys;
-    //std::copy(keys, keys + 32, magmaKeys.keys->bytes);
-    //std::vector<float> timeDefault;
+    magmaKeySet magmaKeys;
+    std::copy(keys, keys + 32, magmaKeys.keys->bytes);
+    std::vector<float> timeDefault;
+    std::vector<float> time;
+    const size_t countStreams = 2;
+    time.resize(countStreams);
 
-    //timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, true);
-    
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 2048, true) << std::endl;    
 
     // std::cout << "\ntime dafault: ";
     // for (auto time : timeDefault) {
@@ -82,18 +79,22 @@ int main()
     // }
     // std::cout << "milisecond" << std::endl;
 
-    //std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
 
-    // timeDefault = magmaElement.testDefault(tVector, tVector.size(), 16, 16, false);
+    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 2048, false) << std::endl;
+
+    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+
+    timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
     // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
 
-    /*std::cout << "\ntime default: ";
+    std::cout << "\ntime default: ";
     for (auto time : timeDefault) {
         std::cout << time << "; ";
     }
     std::cout << "milisecond" << std::endl;
 
-    std::cout << tVector[0] << " : " << tVector[1] << std::endl;
+    /*std::cout << tVector[0] << " : " << tVector[1] << std::endl;
 
     std::cout << std::endl << "Test Managed" << std::endl;
 
@@ -170,7 +171,7 @@ int main()
         0xff, 0xee, 0xdd, 0xcc, 
         0xbb, 0xaa, 0x99, 0x88 };
 
-    kuznechikKeys testKeyKuz(testKeyBytesKuz);
+    // kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
     // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
@@ -186,8 +187,8 @@ int main()
             testSpeed("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, i, j);
         }
     }*/
-    //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024
-    testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
+    //testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
 
     return 0;
 }

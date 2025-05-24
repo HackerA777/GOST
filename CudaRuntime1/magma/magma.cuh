@@ -24,7 +24,7 @@ public:
 	std::vector<float> testDefault(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
 	std::vector<float> testPinned(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
 	std::vector<float> testManaged(std::vector<magmaBlockT>& data, const size_t blokSize, const size_t gridSize, const bool encryptStatus);
-	int testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
+	double testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const size_t numStreams, const size_t tileSize, const bool encryptStatus);
 
 	void setGridSize(const size_t newGridSize);
 	void setBlockSize(const size_t newBlockSize);

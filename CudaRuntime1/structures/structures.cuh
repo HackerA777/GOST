@@ -106,6 +106,15 @@ struct timeRes {
     std::vector<float> time{ 0, 0 };
 };
 
+struct timeResStream {
+    size_t size;
+    double countStream;
+    double tileSize;
+    double blockSize;
+    double gridSize;
+    bool encrypt;
+    double time;
+};
 
 // structures for CUDA
 #define cudaCheck(e) cudaCheck__((e), __FILE__, __LINE__)
