@@ -543,7 +543,7 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
 double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t tileSize, const bool encryptStatus) {
 
     std::vector<cudaStream_t> streams;
-    streams.resize(countStreams); // std::vector<cudaStream_t>
+    streams.resize(countStreams);
     std::vector<cudaEvent_t> startEvents;
     startEvents.resize(countStreams);
     std::vector<cudaEvent_t> stopEvents;
