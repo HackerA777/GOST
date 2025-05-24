@@ -175,12 +175,12 @@ int main()
 
     // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
-    // kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
+    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
-    // kuznechikElement.checkEcnAndDec();
+    kuznechikElement.checkEcnAndDec();
 
     //kuznechikElement.testSpeedUnequalBytes();
-    //kuznechikElement.searchBestBlockAndGridSize();
+    //kuznechikElement.searchBestBlockAndGridSize();Ну
 
     /*for (size_t i = 32; i <= 1024; i *= 2) {
         for (size_t j = 32; j <= 1024; j *= 2) {
