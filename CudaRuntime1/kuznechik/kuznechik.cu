@@ -238,10 +238,103 @@ __global__ void encryptKuz(const kuznechikByteVector * roundKeysKuznechik, kuzne
 	}
 }
 
-__global__ void decryptKuz(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
+__device__ static kuznechikByteVector encryptBlock(const kuznechikByteVector& block, const kuznechikByteVector* roundKeysKuznechik)
+{
+	kuznechikByteVector result = block;
+	kuznechikByteVector t;
+
+	for (auto i = 0; i < 9; ++i) {
+		result = XOR(result, roundKeysKuznechik[i]);
+		t = result;
+
+		kuznechikByteVector tmp;
+		for (size_t j = 0; j < 16; j++) {
+			tmp = XOR(tmp, static_cast<Table>(*tt[i][j]).table[i]->bytes[j]);
+		}
+
+		result = tmp;
+	}
+	result = XOR(result, roundKeysKuznechik[9]);
+	return result;
+}
+
+
+__device__ static kuznechikByteVector decryptBlock(const kuznechikByteVector& block, const kuznechikByteVector* roundKeysKuznechik)
+{
+	kuznechikByteVector result = block;
+	kuznechikByteVector t;
+
+	result = XOR(result, roundKeysKuznechik[9]);
+
+	for (auto i = 0; i < 9; ++i) {
+		t = result;
+
+		kuznechikByteVector tmp{};
+		for (size_t j = 0; j < 16; j++) {
+			tmp = XOR(tmp, static_cast<Table>(*tt[i][j]).table[i]->bytes[j]);
+		}
+
+		result = tmp;
+
+		result = XOR(result, roundKeysKuznechik[i]);
+	}
+	
+	return result;
+}
+
+__global__ void encryptKuz2(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
 	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
 	tid = blockDim.x * blockIdx.x + threadIdx.x;
 	auto tcnt = gridDim.x * blockDim.x;
+
+	for (auto i = tid; i < count; i += tcnt) {
+		src[i] = encryptBlock(src[i], roundKeysKuznechik);
+	}
+}
+
+__global__ void decryptKuz2(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+
+	for (auto i = tid; i < count; i += tcnt) {
+		src[i] = decryptBlock(src[i], roundKeysKuznechik);
+	}
+}
+
+void kuznechik::processData2(kuznechikByteVector* src, kuznechikByteVector* dest, const size_t countBlocks, bool enc) const {
+
+	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
+	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
+	cudaError_t cudaStatus;
+
+	cudaCheck(cudaMemcpy(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+
+	cudaCheck(cudaMemcpy(dev_blocks.get(), src, countBlocks * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
+
+	//cudaCheck(cudaGetLastError());
+
+	if (enc) {
+		encryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
+	}
+	else {
+		decryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
+	}
+
+	cudaCheck(cudaGetLastError());
+
+	cudaCheck(cudaDeviceSynchronize());
+
+	cudaCheck(cudaMemcpy(dest, dev_blocks.get(), countBlocks * sizeof(kuznechikByteVector), cudaMemcpyDeviceToHost));
+}
+
+__global__ void decryptKuz(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
+
+
+	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
+	tid = blockDim.x * blockIdx.x + threadIdx.x;
+	auto tcnt = gridDim.x * blockDim.x;
+
 	for (auto i = tid; i < count; i += tcnt) {
 		kuznechikByteVector temp = XOR(src[i], roundKeysKuznechik[9]);
 		for (int j = 8; j >= 0; --j) {
@@ -272,7 +365,7 @@ void kuznechik::processData(kuznechikByteVector* src, kuznechikByteVector* dest,
 		decryptKuz <<<blockSize, gridSize>>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 	}
 
-	//cudaCheck(cudaGetLastError());
+	cudaCheck(cudaGetLastError());
 
 	cudaCheck(cudaDeviceSynchronize());
 
@@ -302,7 +395,7 @@ void kuznechik::checkEcnAndDec() {
 	kuznechikKeys testKeys(keys);
 
 	kuznechik testAlgorithm(testKeys, 16, 8, 8);
-	testAlgorithm.processData(&testBlock, &resultBlock, 1, true);
+	testAlgorithm.processData2(&testBlock, &resultBlock, 1, true);
 
 	std::cout << "Test string: " << testBlock << std::endl;
 	std::cout << "Result encryption test string: " << resultBlock << std::endl;
@@ -312,7 +405,7 @@ void kuznechik::checkEcnAndDec() {
 	else
 		std::cout << "Encryption algoritm unvalid!" << std::endl;
 
-	testAlgorithm.processData(&resultBlock, &resultBlock, 1, false);
+	testAlgorithm.processData2(&resultBlock, &resultBlock, 1, false);
 	std::cout << "Result decryption test string: " << resultBlock << std::endl;
 	if (testBlock.ull == resultBlock.ull)
 		std::cout << "Decryption algoritm valid!" << std::endl;

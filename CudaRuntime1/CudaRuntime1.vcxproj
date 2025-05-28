@@ -96,6 +96,7 @@
     <ClInclude Include="kuznechik\kuznechik.cuh" />
     <ClInclude Include="magma\magma.cuh" />
     <ClInclude Include="structures\structures.cuh" />
+    <ClInclude Include="table.cuh" />
     <ClInclude Include="testSpeed\testSpeed.h" />
     <ClInclude Include="tests\tests.cuh" />
   </ItemGroup>

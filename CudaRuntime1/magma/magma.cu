@@ -540,7 +540,7 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
     return time;
 }
 
-double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t tileSize, const bool encryptStatus) {
+double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t blocksPerStream, const bool encryptStatus) {
 
     std::vector<cudaStream_t> streams;
     streams.resize(countStreams);
@@ -559,14 +559,14 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
 
     size_t bufferSize = dataSize;
 
-    if (countBlocks > tileSize) {
-        bufferSize = tileSize * 8;
+    if (countBlocks > blocksPerStream) {
+        bufferSize = blocksPerStream * 8;
     }
 
     const size_t newCountBlocks = bufferSize / 8;
 
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
-    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(newCountBlocks);
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(newCountBlocks * countStreams);
 
     cudaCheck(cudaGetLastError());
     
@@ -584,32 +584,32 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
     }
 
     int streamId = 0;
-    for (int i = 0; i < countBlocks; i += tileSize) {
+    for (int i = 0; i < countBlocks; i += blocksPerStream) {
 
         if (!flags[streamId]) {
-            cudaCheck(cudaEventRecord(startEvents[streamId]));
+            cudaCheck(cudaEventRecord(startEvents[streamId], streams[streamId]));
             flags[streamId] = true;
         }
-    
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get(), data.data() + 2 * bufferSize * (i / tileSize), bufferSize, cudaMemcpyHostToDevice, streams[streamId]));
+
+        cudaCheck(cudaMemcpyAsync(dev_blocks.get() + blocksPerStream * streamId, data.data() + blocksPerStream * (i / blocksPerStream), bufferSize, cudaMemcpyHostToDevice, streams[streamId]));
         cudaCheck(cudaGetLastError());
     
         if (encryptStatus) {
-            encryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get(), newCountBlocks);
+            encryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
         }
         else {
-            decryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get(), newCountBlocks);
+            decryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
         }
     
         cudaCheck(cudaGetLastError());
     
-        cudaCheck(cudaMemcpyAsync(data.data() + 2 * bufferSize * (i / tileSize), dev_blocks.get(), bufferSize, cudaMemcpyDeviceToHost, streams[streamId]));
+        cudaCheck(cudaMemcpyAsync(data.data() + blocksPerStream * (i / blocksPerStream), dev_blocks.get() + blocksPerStream * streamId, bufferSize, cudaMemcpyDeviceToHost, streams[streamId]));
 
         streamId = (streamId + 1) % countStreams;
     }
     
     for (int i = 0; i < countStreams; ++i) {
-        cudaCheck(cudaEventRecord(stopEvents[i]));
+        cudaCheck(cudaEventRecord(stopEvents[i], streams[i]));
     }
     
     for (int i = 0; i < countStreams; ++i) {

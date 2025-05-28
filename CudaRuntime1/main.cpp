@@ -69,7 +69,7 @@ int main()
     const size_t countStreams = 2;
     time.resize(countStreams);
 
-    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, true) << std::endl;    
 
@@ -79,11 +79,11 @@ int main()
     // }
     // std::cout << "milisecond" << std::endl;
 
-    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, false) << std::endl;
 
-    std::cout << tVector[1023] << " : " << tVector[2047] << std::endl;
+    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     // timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
     // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
@@ -171,13 +171,13 @@ int main()
         0xff, 0xee, 0xdd, 0xcc, 
         0xbb, 0xaa, 0x99, 0x88 };
 
-    // kuznechikKeys testKeyKuz(testKeyBytesKuz);
+    kuznechikKeys testKeyKuz(testKeyBytesKuz);
 
     // std::cout << 1024 * 1024 * 1024 * 0.5 / sizeof(kuznechikByteVector) << "  " << 1024 * 1024 * 1024 * 0.5 << std::endl;
 
-    //kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
+    kuznechik kuznechikElement(testKeyKuz, 1024*1024*1024*0.5/sizeof(kuznechikByteVector), 512, 1024);
 
-    //kuznechikElement.checkEcnAndDec();
+    kuznechikElement.checkEcnAndDec();
 
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();Ну

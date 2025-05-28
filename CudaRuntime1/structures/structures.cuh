@@ -57,8 +57,8 @@ struct kuznechikKeys {
 union kuznechikHalfVector {
     uint8_t bytes[sizeof(uint64_t)];
     uint64_t halfVector;
-    __device__ kuznechikHalfVector() = default;
-    __device__ kuznechikHalfVector(const uint64_t src) : halfVector(src) {};
+    __device__ __host__ kuznechikHalfVector() = default;
+    __device__ __host__ kuznechikHalfVector(const uint64_t src) : halfVector(src) {};
 };
 
 union kuznechikByteVector {
@@ -68,10 +68,6 @@ union kuznechikByteVector {
     } halfsData;
     uint64_t ull;
     uint8_t bytes[sizeof(uint64_t) * 2];
-    __device__ __host__ kuznechikByteVector() {
-        halfsData.lo = 0;
-        halfsData.hi = 0;
-    };
     __device__ __host__ kuznechikByteVector(const kuznechikHalfVector& lo, const kuznechikHalfVector& hi) : halfsData{ lo, hi } {};
     __device__ __host__ explicit kuznechikByteVector(uint8_t* src){
         //std::copy_n(src, 16, bytes);
@@ -85,6 +81,7 @@ union kuznechikByteVector {
             this->bytes[i] = byte;
         }
     };
+    __device__ __host__ kuznechikByteVector() = default;
 };
 
 inline std::ostream& operator << (std::ostream& s, const kuznechikByteVector& block) {

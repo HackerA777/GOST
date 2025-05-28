@@ -52,6 +52,7 @@
     <ClInclude Include="tests\tests.cuh">
       <Filter>tests</Filter>
     </ClInclude>
+    <ClInclude Include="table.cuh" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="testSpeed\testSpeed.cpp">
