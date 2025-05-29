@@ -3,7 +3,7 @@
 void readFileMagma(const std::string path, std::vector<magmaBlockT>& result) {
     std::ifstream inputFile(path, std::ios::binary);
     if (!inputFile) {
-        std::cerr << "Error opening file: " << path << std::endl;
+        throw "Error read input file!";
     }
 
     inputFile.seekg(0, std::ios::end);
@@ -16,7 +16,7 @@ void readFileMagma(const std::string path, std::vector<magmaBlockT>& result) {
     inputFile.read(reinterpret_cast<char*>(buffer.data()), inputFileSize);
 
     if (inputFile.gcount() != inputFileSize) {
-        std::cerr << "Error read input file!" << std::endl;
+        throw "Error read input file!";
     }
 
     inputFile.close();
@@ -31,7 +31,7 @@ void readFileMagma(const std::string path, std::vector<magmaBlockT>& result) {
 void readFileKuznechik(const std::string path, std::vector<kuznechikByteVector>& result) {
     std::ifstream inputFile(path, std::ios::binary);
     if (!inputFile) {
-        std::cerr << "Error opening file: " << path << std::endl;
+        throw "Error read input file!";
     }
 
     inputFile.seekg(0, std::ios::end);        // Переходим в конец файла
@@ -44,7 +44,7 @@ void readFileKuznechik(const std::string path, std::vector<kuznechikByteVector>&
     inputFile.read(reinterpret_cast<char*>(buffer.data()), inputFileSize);
 
     if (inputFile.gcount() != inputFileSize) {
-        std::cerr << "Error read input file!" << std::endl;
+        throw "Error read input file!";
     }
 
     inputFile.close();

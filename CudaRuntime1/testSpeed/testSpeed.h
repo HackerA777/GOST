@@ -1,4 +1,6 @@
 #pragma one
+#include <filesystem>
+#include <stdexcept>
 #include "../structures/structures.cuh"
 #include "../magma/magma.cuh"
 #include "../kuznechik/kuznechik.cuh"

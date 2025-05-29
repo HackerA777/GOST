@@ -18,6 +18,17 @@ bool generateFile::generate(const std::string& path) {
     std::string newPath;
     for (size_t s = range[0]; s <= range[1]; s = s * 2) {
         newPath.append(path.data());
+
+        std::ifstream inputDirectory(path, std::ios::binary);
+        if (!inputDirectory) {
+            std::error_code ec;
+            bool created = std::filesystem::create_directory(path, ec);
+
+            if (ec) { // Ошибки файловой системы (нет прав, неверный путь и т.д.)
+                throw std::filesystem::filesystem_error("Ошибка создания директории", path, ec);
+            }
+        }
+
         newPath.append("\\");
         newPath.append(std::to_string(s));
         newPath.append("bytes");
