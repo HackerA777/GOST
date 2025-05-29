@@ -62,16 +62,16 @@ int main()
     //std::cout << "test copy: " << *tPtr << std::endl;
 
     // std::cout << std::endl << "Test Default" << tVector.size() << std::endl;
-    magmaKeySet magmaKeys;
-    std::copy(keys, keys + 32, magmaKeys.keys->bytes);
-    std::vector<float> timeDefault;
-    std::vector<float> time;
-    const size_t countStreams = 2;
-    time.resize(countStreams);
-
-    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
-
-    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, true) << std::endl;    
+    //magmaKeySet magmaKeys;
+    //std::copy(keys, keys + 32, magmaKeys.keys->bytes);
+    //std::vector<float> timeDefault;
+    //std::vector<float> time;
+    //const size_t countStreams = 2;
+    //time.resize(countStreams);
+    //
+    //std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
+    //
+    //std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, true) << std::endl;    
 
     // std::cout << "\ntime dafault: ";
     // for (auto time : timeDefault) {
@@ -79,11 +79,11 @@ int main()
     // }
     // std::cout << "milisecond" << std::endl;
 
-    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
-
-    std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, false) << std::endl;
-
-    std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
+    //std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
+    //
+    //std::cout << "testStreams: " << magmaElement.testStreams(tVector, 128, 128, countStreams, 1024, false) << std::endl;
+    //
+    //std::cout << tVector[0] << " : " << tVector[1023] << " : " << tVector[2047] << std::endl;
 
     // timeDefault = magmaElement.testDefault(tVector, 128, 128, false);
     // timeDefault = testDefaultTemplate<magmaBlockT, magmaKeySet>(tVector, magmaKeys, 32, 32, true);
@@ -188,7 +188,7 @@ int main()
         }
     }*/
     //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
-    //testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    //testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
 
     return 0;
 }
