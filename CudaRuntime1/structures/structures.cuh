@@ -69,7 +69,7 @@ union kuznechikByteVector {
     uint64_t ull;
     uint8_t bytes[sizeof(uint64_t) * 2];
     __device__ __host__ kuznechikByteVector(const kuznechikHalfVector& lo, const kuznechikHalfVector& hi) : halfsData{ lo, hi } {};
-    __device__ __host__ explicit kuznechikByteVector(uint8_t* src){
+    __device__ __host__ explicit kuznechikByteVector(const uint8_t* src) {
         //std::copy_n(src, 16, bytes);
         for (int i = 0; i < 16; ++i) {
             bytes[i] = src[i];

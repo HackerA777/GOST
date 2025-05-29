@@ -238,7 +238,7 @@ __global__ void encryptKuz(const kuznechikByteVector * roundKeysKuznechik, kuzne
 	}
 }
 
-__device__ static kuznechikByteVector encryptBlock(const kuznechikByteVector& block, const kuznechikByteVector* roundKeysKuznechik)
+__device__ static kuznechikByteVector encryptBlock(const kuznechikByteVector& block, const kuznechikByteVector* roundKeysKuznechik, const Table* tableG)
 {
 	kuznechikByteVector result = block;
 	kuznechikByteVector t;
@@ -249,9 +249,12 @@ __device__ static kuznechikByteVector encryptBlock(const kuznechikByteVector& bl
 
 		kuznechikByteVector tmp{};
 		for (size_t j = 0; j < 16; j++) {
-			tmp = XOR(tmp, static_cast<Table>(*tt[j][t.bytes[j]]).table[j][t.bytes[j]]);
+			//tmp = XOR(tmp, kuznechikByteVector(tt[j][t.bytes[j]]));
+			tmp = XOR(tmp, tableG[0].table[j][t.bytes[j]]);
+			//tmp = XOR(tmp, static_cast<kuznechikByteVector>((tt[j][t.bytes[j]])));
+			//tmp = XOR(tmp, static_cast<Table>(*tt[j][t.bytes[j]]).table[j][t.bytes[j]]);
+			//tmp = XOR(tmp, static_cast<Table>(*tt[j][t.bytes[j]]).table[j]->bytes[t.bytes[j]]);
 		}
-
 		result = tmp;
 	}
 	result = XOR(result, roundKeysKuznechik[9]);
@@ -282,13 +285,13 @@ __device__ static kuznechikByteVector decryptBlock(const kuznechikByteVector& bl
 	return result;
 }
 
-__global__ void encryptKuz2(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count) {
+__global__ void encryptKuz2(const kuznechikByteVector* roundKeysKuznechik, kuznechikByteVector* src, const size_t count, const Table* tableG) {
 	auto tid = blockDim.x * blockIdx.x + threadIdx.x;
 	tid = blockDim.x * blockIdx.x + threadIdx.x;
 	auto tcnt = gridDim.x * blockDim.x;
 
 	for (auto i = tid; i < count; i += tcnt) {
-		src[i] = encryptBlock(src[i], roundKeysKuznechik);
+		src[i] = encryptBlock(src[i], roundKeysKuznechik, tableG);
 	}
 }
 
@@ -304,18 +307,30 @@ __global__ void decryptKuz2(const kuznechikByteVector* roundKeysKuznechik, kuzne
 
 void kuznechik::processData2(kuznechikByteVector* src, kuznechikByteVector* dest, const size_t countBlocks, bool enc) const {
 
+	Table table;
+
+	for (size_t i = 0; i < 16; ++i) {
+		for (size_t j = 0; j < 256; ++j) {
+			table.table[i][j] = kuznechikByteVector(tt[i][j]);
+
+		}
+	}
+
 	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
 	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
+	cuda_ptr<Table> tableG = cuda_alloc<Table>(1);
 	cudaError_t cudaStatus;
 
 	cudaCheck(cudaMemcpy(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
 	cudaCheck(cudaMemcpy(dev_blocks.get(), src, countBlocks * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
+	cudaCheck(cudaMemcpy(tableG.get(), table.table, sizeof(Table), cudaMemcpyHostToDevice));
+
 	//cudaCheck(cudaGetLastError());
 
 	if (enc) {
-		encryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
+		encryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 	}
 	else {
 		decryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
@@ -491,6 +506,17 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 	const size_t countBlocks = data.size();
 	const size_t dataSize = countBlocks * sizeof(kuznechikByteVector);
 
+	Table table;
+
+	for (size_t i = 0; i < 16; ++i) {
+		for (size_t j = 0; j < 256; ++j) {
+			table.table[i][j] = kuznechikByteVector(tt[i][j]);
+
+		}
+	}
+	cuda_ptr<Table> tableG = cuda_alloc<Table>(1);
+	cudaCheck(cudaMemcpy(tableG.get(), table.table, sizeof(Table), cudaMemcpyHostToDevice));
+
 	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
 	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
 
@@ -515,7 +541,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 
 		cudaCheck(cudaGetLastError());
 
-		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
+		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 
@@ -576,6 +602,17 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 	const size_t countBlocks = data.size();
 	const size_t dataSize = countBlocks * sizeof(kuznechikByteVector);
 
+	Table table;
+
+	for (size_t i = 0; i < 16; ++i) {
+		for (size_t j = 0; j < 256; ++j) {
+			table.table[i][j] = kuznechikByteVector(tt[i][j]);
+
+		}
+	}
+	cuda_ptr<Table> tableG = cuda_alloc<Table>(1);
+	cudaCheck(cudaMemcpy(tableG.get(), table.table, sizeof(Table), cudaMemcpyHostToDevice));
+
 	cuda_ptr<kuznechikByteVector> dev_keys = cuda_alloc<kuznechikByteVector>(10);
 	cuda_ptr<kuznechikByteVector[]> dev_blocks = cuda_alloc<kuznechikByteVector[]>(countBlocks);
 
@@ -601,7 +638,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 
 		cudaCheck(cudaEventRecord(startEnc));
 
-		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
+		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 
@@ -674,6 +711,17 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 	cudaCheck(cudaEventCreate(&startCopyAndEnc));
 	cudaCheck(cudaEventCreate(&stopCopyAndEnc));
 
+	Table table;
+
+	for (size_t i = 0; i < 16; ++i) {
+		for (size_t j = 0; j < 256; ++j) {
+			table.table[i][j] = kuznechikByteVector(tt[i][j]);
+
+		}
+	}
+	cuda_ptr<Table> tableG = cuda_alloc<Table>(1);
+	cudaCheck(cudaMemcpy(tableG.get(), table.table, sizeof(Table), cudaMemcpyHostToDevice));
+
 	cudaCheck(cudaMemcpyAsync(dev_keys.get(), roundKeysKuznechik, 10 * sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
 	cudaCheck(cudaMallocManaged(&buffer, dataSize));
@@ -686,7 +734,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 	if (encryptStatus) {
 		cudaCheck(cudaEventRecord(startEnc));
 
-		encryptKuz2 <<< blockSize, gridSize >>> ( dev_keys.get(), buffer,countBlocks);
+		encryptKuz2 <<< blockSize, gridSize >>> ( dev_keys.get(), buffer,countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 

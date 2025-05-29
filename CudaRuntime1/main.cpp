@@ -188,7 +188,7 @@ int main()
         }
     }*/
     //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
-    //testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
 
     return 0;
 }
