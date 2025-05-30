@@ -183,19 +183,19 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
         
         buffer.clear();
     }
-    std::cout << "Name test;size;enc;blockSize;gridSize;speedCopyAndEnc;speedEnc" << std::endl;
+    std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
 
-        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << blockSize << ";" << gridSize << ";" <<
+        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
             (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
     }
 
-    std::cout << "Test streams:\nsize;enc;countStream;tileSize;blockSize;gridSize;speed" << std::endl;
+    std::cout << "Test streams:\nsize;enc;countStream;tileSize;gridSize;blockSize;speed" << std::endl;
     for (auto elem : timeResStreamVector) {
-        std::cout << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << elem.countStream << ";" << elem.blockSize << ";" << elem.gridSize << ";" <<
+        std::cout << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << elem.countStream << ";" << elem.gridSize << ";" << elem.blockSize << ";" <<
             (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) << std::endl;
     }
 }
@@ -297,22 +297,22 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
         buffer.clear();
     }
 
-    //std::cout << "Name test;size;enc;blockSize;gridSize;timeCopyAndEnc;timeEnc" << std::endl;
+    //std::cout << "Name test;size;enc;gridSize;blockSize;timeCopyAndEnc;timeEnc" << std::endl;
     //for (auto elem : timeVector) {
     //    //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
     //    //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
     //    //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
     //    
-    //    std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << blockSize << ";" << gridSize << ";" <<
+    //    std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
     //        (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
     //}
-    std::cout << "Name test;size;enc;blockSize;gridSize;speedCopyAndEnc;speedEnc" << std::endl;
+    std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
 
-        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << blockSize << ";" << gridSize << ";" <<
+        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
             (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
     }
 }

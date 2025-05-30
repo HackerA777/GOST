@@ -330,10 +330,10 @@ void kuznechik::processData2(kuznechikByteVector* src, kuznechikByteVector* dest
 	//cudaCheck(cudaGetLastError());
 
 	if (enc) {
-		encryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
+		encryptKuz2 << <gridSize, blockSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 	}
 	else {
-		decryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
+		decryptKuz2 << <gridSize, blockSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
 	}
 
 	cudaCheck(cudaGetLastError());
@@ -374,10 +374,10 @@ void kuznechik::processData(kuznechikByteVector* src, kuznechikByteVector* dest,
 	//cudaCheck(cudaGetLastError());
 
 	if (enc) {
-		encryptKuz <<<blockSize, gridSize>>>(dev_keys.get(), dev_blocks.get(), countBlocks);
+		encryptKuz <<<gridSize, blockSize>>>(dev_keys.get(), dev_blocks.get(), countBlocks);
 	}
 	else {
-		decryptKuz <<<blockSize, gridSize>>> (dev_keys.get(), dev_blocks.get(), countBlocks);
+		decryptKuz <<<gridSize, blockSize>>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 	}
 
 	cudaCheck(cudaGetLastError());
@@ -491,7 +491,7 @@ kuznechik::kuznechik(const kuznechikKeys& mainKey, const size_t buffSize, const 
 	cudaCheck(cudaMemcpy(dev_keys.get(), mainKey.bytes, sizeof(kuznechikKeys), cudaMemcpyHostToDevice));
 	cudaCheck(cudaMemcpy(dev_res_keys.get(), roundKeysKuznechik, sizeof(kuznechikByteVector), cudaMemcpyHostToDevice));
 
-	getRoundKeys <<<blockSize, gridSize>>> (*dev_keys, dev_res_keys.get());
+	getRoundKeys <<<1, 1>>> (*dev_keys, dev_res_keys.get());
 
 	cudaCheck(cudaGetLastError());
 	cudaCheck(cudaDeviceSynchronize());
@@ -541,7 +541,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 
 		cudaCheck(cudaGetLastError());
 
-		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
+		encryptKuz2 <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 
@@ -566,7 +566,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 
 		cudaCheck(cudaEventRecord(startEnc));
 
-		decryptKuz2 << <blockSize, gridSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
+		decryptKuz2 <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 
 		cudaCheck(cudaGetLastError());
 
@@ -638,7 +638,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 
 		cudaCheck(cudaEventRecord(startEnc));
 
-		encryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
+		encryptKuz2 <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 
@@ -666,7 +666,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 
 		cudaCheck(cudaEventRecord(startEnc));
 
-		decryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
+		decryptKuz2 <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 
 		cudaCheck(cudaGetLastError());
 
@@ -734,7 +734,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 	if (encryptStatus) {
 		cudaCheck(cudaEventRecord(startEnc));
 
-		encryptKuz2 <<< blockSize, gridSize >>> ( dev_keys.get(), buffer,countBlocks, tableG.get());
+		encryptKuz2 <<< gridSize, blockSize >>> ( dev_keys.get(), buffer,countBlocks, tableG.get());
 
 		cudaCheck(cudaGetLastError());
 
@@ -744,7 +744,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 
 		cudaCheck(cudaEventRecord(startEnc));
 
-		decryptKuz2 <<< blockSize, gridSize >>> (dev_keys.get(), buffer, countBlocks);
+		decryptKuz2 <<< gridSize, blockSize >>> (dev_keys.get(), buffer, countBlocks);
 
 		cudaCheck(cudaGetLastError());
 

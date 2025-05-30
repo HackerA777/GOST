@@ -166,7 +166,7 @@ void magma::encryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const size_t
     cudaCheck(cudaMemcpyAsync(dev_blocks.get(), blocks, dataSize, cudaMemcpyHostToDevice));
     cudaCheck(cudaGetLastError());
 
-    encryptMgm <<< blockSize, gridSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
+    encryptMgm <<< gridSize, blockSize >>> (*dev_keys, dev_blocks.get(), countBlocks);
 
     cudaCheck(cudaGetLastError());
     if(blocks != out_blocks)
@@ -202,7 +202,7 @@ void magma::decryptCuda(const uint8_t* blocks, uint8_t* out_blocks, const size_t
 
     cudaCheck(cudaGetLastError());
 
-    decryptMgm <<< blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+    decryptMgm <<< gridSize, blockSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
 
     cudaCheck(cudaGetLastError());
     if (blocks != out_blocks)
@@ -394,10 +394,10 @@ std::vector<float> magma::testDefault(std::vector<magmaBlockT>& data, const size
     cudaCheck(cudaGetLastError());
 
     if (encryptStatus) {
-        encryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        encryptMgm << < gridSize, blockSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
     else {
-        decryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        decryptMgm << < gridSize, blockSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
 
     cudaCheck(cudaGetLastError());
@@ -456,10 +456,10 @@ std::vector<float> magma::testPinned(std::vector<magmaBlockT>& data, const size_
     cudaCheck(cudaEventRecord(startEnc));
 
     if (encryptStatus) {
-        encryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        encryptMgm << < gridSize, blockSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
     else {
-        decryptMgm << < blockSize, gridSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
+        decryptMgm << < gridSize, blockSize >> > (*dev_keys, dev_blocks.get(), countBlocks);
     }
 
     cudaCheck(cudaGetLastError());
@@ -513,10 +513,10 @@ std::vector<float> magma::testManaged(std::vector<magmaBlockT>& data, const size
     cudaCheck(cudaEventRecord(startEnc));
 
     if (encryptStatus) {
-        encryptMgm <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);        
+        encryptMgm <<< gridSize, blockSize >>> (*dev_keys, buffer, countBlocks);
     }
     else {
-        decryptMgm <<< blockSize, gridSize >>> (*dev_keys, buffer, countBlocks);
+        decryptMgm <<< gridSize, blockSize >>> (*dev_keys, buffer, countBlocks);
     }
 
     cudaCheck(cudaGetLastError());
@@ -595,10 +595,10 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
         cudaCheck(cudaGetLastError());
     
         if (encryptStatus) {
-            encryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
+            encryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
         }
         else {
-            decryptMgm <<< blockSize, gridSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
+            decryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
         }
     
         cudaCheck(cudaGetLastError());
