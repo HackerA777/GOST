@@ -138,7 +138,7 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
             timeResTemp.gridSize = parametrs[3];
 
             //timeResTemp.time = testMagma.testStreams(buffer, parametrs[2], parametrs[3], parametrs[0], parametrs[1], true);
-            timeResTemp.time = testMagma.testStreams(buffer, 256, 1024*16, 4, 8192, true);
+            timeResTemp.time = testMagma.testStreams(buffer, 256, 1024*16, 3, 8192, true);
 
             timeResStreamVector.push_back(timeResTemp);
         }

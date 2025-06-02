@@ -206,7 +206,7 @@ int main()
     std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     //for (size_t j = 128; j < 2048; j = j * 2) {
         for (size_t i = 0; i < 1; ++i) {
-            testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 256, 16*1024);
+            testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 256, 16*1024);
         }
     //}
 
