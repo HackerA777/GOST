@@ -559,14 +559,8 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
 
     size_t bufferSize = dataSize;
 
-    if (countBlocks > blocksPerStream) {
-        bufferSize = blocksPerStream * 8;
-    }
-
-    const size_t newCountBlocks = bufferSize / 8;
-
     cuda_ptr<magmaKeySet> dev_keys = cuda_alloc<magmaKeySet>();
-    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(newCountBlocks * countStreams);
+    cuda_ptr<magmaBlockT[]> dev_blocks = cuda_alloc<magmaBlockT[]>(blocksPerStream * countStreams);
 
     cudaCheck(cudaGetLastError());
     
@@ -586,24 +580,26 @@ double magma::testStreams(std::vector<magmaBlockT>& data, const size_t blockSize
     int streamId = 0;
     for (int i = 0; i < countBlocks; i += blocksPerStream) {
 
+        size_t countBlockProcess = std::min(countBlocks - i, blocksPerStream);
+
         if (!flags[streamId]) {
             cudaCheck(cudaEventRecord(startEvents[streamId], streams[streamId]));
             flags[streamId] = true;
         }
 
-        cudaCheck(cudaMemcpyAsync(dev_blocks.get() + blocksPerStream * streamId, data.data() + blocksPerStream * (i / blocksPerStream), bufferSize, cudaMemcpyHostToDevice, streams[streamId]));
+        cudaCheck(cudaMemcpyAsync(dev_blocks.get() + blocksPerStream * streamId, data.data() + i, countBlockProcess * sizeof(magmaBlockT), cudaMemcpyHostToDevice, streams[streamId]));
         cudaCheck(cudaGetLastError());
     
         if (encryptStatus) {
-            encryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
+            encryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + blocksPerStream * streamId, countBlockProcess);
         }
         else {
-            decryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + newCountBlocks * streamId, blocksPerStream);
+            decryptMgm <<< gridSize, blockSize, 0, streams[streamId] >> > (*dev_keys, dev_blocks.get() + blocksPerStream * streamId, countBlockProcess);
         }
     
         cudaCheck(cudaGetLastError());
     
-        cudaCheck(cudaMemcpyAsync(data.data() + blocksPerStream * (i / blocksPerStream), dev_blocks.get() + blocksPerStream * streamId, bufferSize, cudaMemcpyDeviceToHost, streams[streamId]));
+        cudaCheck(cudaMemcpyAsync(data.data() + i, dev_blocks.get() + blocksPerStream * streamId, countBlockProcess * sizeof(magmaBlockT), cudaMemcpyDeviceToHost, streams[streamId]));
 
         streamId = (streamId + 1) % countStreams;
     }
