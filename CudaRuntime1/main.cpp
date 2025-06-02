@@ -18,12 +18,8 @@ std::string printVector(const typeVector& block) {
     return result;
 }
 
-
-
 int main()
 {
-    // SetConsoleOutputCP(1251);
-    // SetConsoleCP(1251);
     SetConsoleOutputCP(65001);
 
     const unsigned char keys[32] = {
@@ -161,6 +157,19 @@ int main()
     //magmaElement.testSpeedUnequalBytes();
     //magmaElement.searchBestBlockAndGridSize();
 
+    uint8_t testStringKuz[16] = {
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11
+    };
+
+    kuznechikByteVector k;
+    std::vector<kuznechikByteVector> kVector;
+
+    std::copy(testStringKuz, testStringKuz + 16, k.bytes);
+    //tVector.push_back(t);
+    for (int i = 0; i < 2048; ++i) {
+        kVector.push_back(k);
+    }
+
     uint8_t testKeyBytesKuz[] = { 
         0xef, 0xcd, 0xab, 0x89, 
         0x67, 0x45, 0x23, 0x01, 
@@ -179,6 +188,12 @@ int main()
 
     kuznechikElement.checkEcnAndDec();
 
+    std::cout << kVector[0] << " : " << kVector[1023] << " : " << kVector[2047] << std::endl;
+
+    std::cout << kuznechikElement.testStreams(kVector, 256, 16 * 1024, 2, 512, true) << std::endl;;
+
+    std::cout << kVector[0] << " : " << kVector[1023] << " : " << kVector[2047] << std::endl;
+
     //kuznechikElement.testSpeedUnequalBytes();
     //kuznechikElement.searchBestBlockAndGridSize();Ну
 
@@ -188,7 +203,12 @@ int main()
         }
     }*/
     //testSpeedMagma("C:\\Users\\artio\\Documents\\testFilesForGOST", { 8 * 1024 * 1024, 8 * 1024 * 1024 }, 1024, 1024);
-    testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 128 * 1024 * 1024, 1024 * 1024 * 1024 }, 1024, 1024);
+    std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
+    //for (size_t j = 128; j < 2048; j = j * 2) {
+        for (size_t i = 0; i < 1; ++i) {
+            testSpeedKuznechik("C:\\Users\\artio\\Documents\\testFilesForGOST", { 1024 * 1024 * 1024, 1024 * 1024 * 1024 }, 256, 16*1024);
+        }
+    //}
 
     return 0;
 }

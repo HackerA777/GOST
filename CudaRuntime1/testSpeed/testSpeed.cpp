@@ -93,8 +93,9 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
     std::vector<std::vector<double>> testParametrs;
 
     for (int i = 2; i < 5; ++i) {
-        for (int j = 0; j < 4; ++j) {
-            testParametrs.push_back( { double(i), 1024 * std::pow(2, j), 128 * std::pow(2, j), 128 * std::pow(2, j) });
+        for (int j = 1; j < 4; ++j) {
+            //testParametrs.push_back( { double(i), 1024 * std::pow(2, j), 128 * std::pow(2, j), 128 * std::pow(2, j) });
+            testParametrs.push_back({ double(i), 1024 * std::pow(2, j), 256, 1024*16 });
         }
     }
 
@@ -136,7 +137,8 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
             timeResTemp.blockSize = parametrs[2];
             timeResTemp.gridSize = parametrs[3];
 
-            timeResTemp.time = testMagma.testStreams(buffer, parametrs[2], parametrs[3], parametrs[0], parametrs[1], true);
+            //timeResTemp.time = testMagma.testStreams(buffer, parametrs[2], parametrs[3], parametrs[0], parametrs[1], true);
+            timeResTemp.time = testMagma.testStreams(buffer, 256, 1024*16, 4, 8192, true);
 
             timeResStreamVector.push_back(timeResTemp);
         }
@@ -183,20 +185,21 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
         
         buffer.clear();
     }
-    std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
+    //std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
 
         std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
-            (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
+            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << ";" <<
+            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
     }
 
     std::cout << "Test streams:\nsize;enc;countStream;tileSize;gridSize;blockSize;speed" << std::endl;
     for (auto elem : timeResStreamVector) {
         std::cout << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << elem.countStream << ";" << elem.gridSize << ";" << elem.blockSize << ";" <<
-            (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) << std::endl;
+            (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
     }
 }
 
@@ -225,6 +228,7 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
 
     //std::vector<float> time{ 0, 0 };
     std::vector<timeRes> timeVector;
+    std::vector<double> timeStreams;
 
     for (size_t i = range[0]; i <= range[1]; i = i * 2) {
         timeRes tempTimeRes;
@@ -294,6 +298,8 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
 
         newPath.clear();
 
+        timeStreams.push_back(testKuznechik.testStreams(buffer, 256, 1024 * 16, 4, 8192, true));
+
         buffer.clear();
     }
 
@@ -306,13 +312,19 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
     //    std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
     //        (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
     //}
-    std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
+    // std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
         //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
        //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
        //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
 
         std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
-            (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
+            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << ";" << 
+            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
+    }
+
+    std::cout << "TimeStreams:" << std::endl;
+    for (auto elem : timeStreams) {
+        std::cout << (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 / (elem / 1000) << std::endl;
     }
 }
