@@ -7,5 +7,5 @@
 #include "../generateFiles/generateFile.h"
 
 std::vector<uint8_t> readFileMagma(const std::string path);
-void testSpeedMagma(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize);
-void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize, const int realeseVersion);
+std::vector<std::vector<double>> testSpeedMagma(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize);
+std::vector<std::vector<double>> testSpeedKuznechik(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize, const int releaseVersion);

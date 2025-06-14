@@ -493,7 +493,7 @@ kuznechik::kuznechik(const kuznechikKeys& mainKey, const size_t buffSize, const 
 	cudaCheck(cudaMemcpy(this->roundKeysKuznechik, dev_res_keys.get(), 10 * sizeof(kuznechikByteVector), cudaMemcpyDeviceToHost));
 }
 
-std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion) {
+std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int releaseVersion) {
 	cudaCheck(cudaGetLastError());
 	std::vector<float> time{ 0, 0 };
 
@@ -535,7 +535,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 	cudaCheck(cudaGetLastError());
 
 	if (encryptStatus) {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			encryptKuz <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 		}
 		else {
@@ -543,7 +543,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 		}
 	}
 	else {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			decryptKuz <<< gridSize, blockSize >>> (dev_keys.get(), dev_blocks.get(), countBlocks);
 		}
 		else {
@@ -579,7 +579,7 @@ std::vector<float> kuznechik::testDefault(std::vector<kuznechikByteVector>& data
 	return time;
 }
 
-std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion) {
+std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int releaseVersion) {
 	std::vector<float> time{ 0, 0 };
 
 	const size_t countBlocks = data.size();
@@ -621,7 +621,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 	cudaCheck(cudaEventRecord(startEnc));
 
 	if (encryptStatus) {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			encryptKuz << < gridSize, blockSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
 		}
 		else {
@@ -629,7 +629,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 		}
 	}
 	else {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			decryptKuz << < gridSize, blockSize >> > (dev_keys.get(), dev_blocks.get(), countBlocks);
 		}
 		else {
@@ -661,7 +661,7 @@ std::vector<float> kuznechik::testPinned(std::vector<kuznechikByteVector>& data,
 	return time;
 }
 
-std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion) {
+std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int releaseVersion) {
 	std::vector<float> time{ 0, 0 };
 	kuznechikByteVector* buffer;
 
@@ -700,7 +700,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 	cudaCheck(cudaEventRecord(startEnc));
 
 	if (encryptStatus) {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			encryptKuz <<< gridSize, blockSize >>> (dev_keys.get(), buffer, countBlocks);
 		}
 		else {
@@ -708,7 +708,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 		}
 	}
 	else {
-		if (realeseVersion == 1) {
+		if (releaseVersion == 1) {
 			decryptKuz <<< gridSize, blockSize >>> (dev_keys.get(), buffer, countBlocks);
 		}
 		else {
@@ -738,7 +738,7 @@ std::vector<float> kuznechik::testManaged(std::vector<kuznechikByteVector>& data
 	return time;
 }
 
-double kuznechik::testStreams(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t blocksPerStream, const bool encryptStatus, const int realeseVersion) {
+double kuznechik::testStreams(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t blocksPerStream, const bool encryptStatus, const int releaseVersion) {
 
 	std::vector<cudaStream_t> streams;
 	streams.resize(countStreams);
@@ -800,7 +800,7 @@ double kuznechik::testStreams(std::vector<kuznechikByteVector>& data, const size
 		cudaCheck(cudaGetLastError());
 
 		if (encryptStatus) {
-			if (realeseVersion == 1) {
+			if (releaseVersion == 1) {
 				encryptKuz <<< gridSize, blockSize, 0, streams[streamId] >>> (dev_keys.get(), dev_blocks.get() + blocksPerStream * streamId, countBlockProcess);
 			}
 			else {
@@ -808,7 +808,7 @@ double kuznechik::testStreams(std::vector<kuznechikByteVector>& data, const size
 			}
 		}
 		else {
-			if (realeseVersion == 1) {
+			if (releaseVersion == 1) {
 				decryptKuz <<< gridSize, blockSize, 0, streams[streamId] >>> (dev_keys.get(), dev_blocks.get() + blocksPerStream * streamId, countBlockProcess);
 			}
 			else {

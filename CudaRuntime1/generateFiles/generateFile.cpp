@@ -34,9 +34,6 @@ bool generateFile::generate(const std::string& path) {
         newPath.append("bytes");
 
         std::ifstream inputFile(newPath, std::ios::binary);
-        if (!inputFile) {
-            std::cerr << "Error opening file: " << path << std::endl;
-        }
         inputFile.seekg(0, std::ios::end);        // Переходим в конец файла
         size_t inputFileSize = inputFile.tellg();      // Получаем размер файла
         inputFile.seekg(0, std::ios::beg);
@@ -52,7 +49,8 @@ bool generateFile::generate(const std::string& path) {
 
         std::ofstream file(newPath, std::ios::binary);
         if (!file) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
+            std::cout << newPath << std::endl;
+            throw "Error creating file";
             return false;
         }
 
@@ -73,7 +71,6 @@ bool generateFile::generate(const std::string& path) {
 
         file.close();
         newPath.clear();
-        std::cout << "File generated: " << newPath << " (" << s << " bytes)" << std::endl;
     }
     return true;
 }
