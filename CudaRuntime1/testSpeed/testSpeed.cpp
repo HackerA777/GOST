@@ -84,20 +84,26 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
 
 	generateFile generateFileForTestSpeed(range, 8);
     if (!generateFileForTestSpeed.generate(path)) {
-        std::cout << "create files error" << std::endl;
+        throw "Ñreate files error!";
     }
 
     std::vector<timeRes> timeVector;
     std::vector<timeResStream> timeResStreamVector;
 
-    std::vector<std::vector<double>> testParametrs;
+    // std::vector<std::vector<double>> testParametrs;
 
-    for (int i = 2; i < 5; ++i) {
-        for (int j = 1; j < 4; ++j) {
-            //testParametrs.push_back( { double(i), 1024 * std::pow(2, j), 128 * std::pow(2, j), 128 * std::pow(2, j) });
-            testParametrs.push_back({ double(i), 1024 * std::pow(2, j), 256, 1024*16 });
-        }
-    }
+    std::vector<double> timeEnc{}; // [0] - testDefaul, [1] - testPinned, [2] - testManaged, [3] - testStreams with one stream, [4] - testStreams with four streams
+    std::vector<double> timeEncAndCopy{}; // [0] - testDefaul, [1] - testPinned, [2] - testManaged
+
+    timeEnc.resize(5);
+    timeEncAndCopy.resize(3);
+
+    //for (int i = 2; i < 5; ++i) {
+    //    for (int j = 1; j < 4; ++j) {
+    //        //testParametrs.push_back( { double(i), 1024 * std::pow(2, j), 128 * std::pow(2, j), 128 * std::pow(2, j) });
+    //        testParametrs.push_back({ double(i), 1024 * std::pow(2, j), 256, 1024*16 });
+    //    }
+    //}
 
     for (size_t i = range[0]; i <= range[1]; i = i * 2) {
         timeRes tempTimeRes;
@@ -105,105 +111,77 @@ void testSpeedMagma(const std::string& path, const std::vector<size_t> range, co
         newPath.append("\\");
         newPath.append(std::to_string(i));
         newPath.append("bytes");
-        readFileMagma(newPath, buffer);
 
-        replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
+        for (size_t j = 0; j < 10; ++j) {
+            readFileMagma(newPath, buffer);
 
-        tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, true);
 
-        replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
+            timeVector.push_back(tempTimeRes);
 
-        tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, true);
 
-        replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
+            timeVector.push_back(tempTimeRes);
 
-        tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, true);
+
+            timeVector.push_back(tempTimeRes);
+
+            timeEnc[3] += testMagma.testStreams(buffer, blockSize, gridSize, 1, 8 * 1024 * 1024, true);
+
+            timeEnc[4] += testMagma.testStreams(buffer, blockSize, gridSize, 4, 8 * 1024 * 1024, true);
+
+            buffer.clear();
+        }
 
         newPath.append("Enc");
-        
-        for (auto parametrs : testParametrs) {
-            std::cout << parametrs[0] << " : " << parametrs[1] << " : " << parametrs[2] << " : " << parametrs[3] << " : " << i / 1024.0 / 1024 << "MB" << std::endl;
-            timeResStream timeResTemp;
-            timeResTemp.size = i;
-            timeResTemp.encrypt = true;
-            timeResTemp.countStream = parametrs[0];
-            timeResTemp.tileSize = parametrs[1];
-            timeResTemp.blockSize = parametrs[2];
-            timeResTemp.gridSize = parametrs[3];
-
-            //timeResTemp.time = testMagma.testStreams(buffer, parametrs[2], parametrs[3], parametrs[0], parametrs[1], true);
-            timeResTemp.time = testMagma.testStreams(buffer, 256, 1024*16, 3, 64*1024*1024, true);
-
-            timeResStreamVector.push_back(timeResTemp);
-        }
-
-        /*std::ofstream file(newPath, std::ios::binary);
-        if (!file) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        file.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        file.close();*/
-
-        /*replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
-
-        tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-
-        replaceTimeRes(tempTimeRes, newPath, "testPinned", false, i);
-
-        tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-        
-
-        replaceTimeRes(tempTimeRes, newPath, "testDefault", false, i);
-
-        tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-
-        newPath.append("Dec");
-
-        std::ofstream fileDec(newPath, std::ios::binary);
-        if (!fileDec) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        fileDec.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        fileDec.close();
-        */
 
         newPath.clear();
-        
-        buffer.clear();
     }
-    //std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
+    
     for (auto elem : timeVector) {
-        //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
-       //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
-       //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
-
-        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
-            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << ";" <<
-            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
+        if (elem.testName == "testDefault") {
+            timeEnc[0] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[0] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
+        if (elem.testName == "testPinned") {
+            timeEnc[1] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[1] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
+        if (elem.testName == "testManaged") {
+            timeEnc[2] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[2] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
     }
 
-    std::cout << "Test streams:\nsize;enc;countStream;tileSize;gridSize;blockSize;speed" << std::endl;
-    for (auto elem : timeResStreamVector) {
-        std::cout << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << elem.countStream << ";" << elem.gridSize << ";" << elem.blockSize << ";" <<
-            (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
-    }
+    /*for (auto elem : timeResStreamVector) {
+        timeEnc[3] += (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+    }*/
+
+    timeEnc[0] = timeEnc[0] / 10.0;
+    timeEnc[1] = timeEnc[1] / 10.0;
+    timeEnc[2] = timeEnc[2] / 10.0;
+    timeEnc[3] = 1.0 / (timeEnc[3] / 10000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+    timeEnc[4] = 1.0 / (timeEnc[4] / 10000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+
+    timeEncAndCopy[0] = timeEncAndCopy[0] / 10.0;
+    timeEncAndCopy[1] = timeEncAndCopy[1] / 10.0;
+    timeEncAndCopy[2] = timeEncAndCopy[2] / 10.0;
+
+    std::cout << "Encryption speed for mode copy 'Default': " << timeEnc[0] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[0] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed for mode copy 'Pinned': " << timeEnc[1] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[1] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed for mode copy 'Managed': " << timeEnc[2] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[2] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed with use one stream command: " << timeEnc[3] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed with use four streams command: " << timeEnc[4] << " Gb/s" << std::endl;
 }
 
-void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize) {
+void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range, const size_t blockSize, const size_t gridSize, const int realeseVersion) {
     std::vector<kuznechikByteVector> buffer;
     std::string newPath;
 
@@ -223,12 +201,18 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
 
     generateFile generateFileForTestSpeed(range, 8);
     if (!generateFileForTestSpeed.generate(path)) {
-        std::cout << "create files error" << std::endl;
+        throw "Ñreate files error!";
     }
 
     //std::vector<float> time{ 0, 0 };
     std::vector<timeRes> timeVector;
     std::vector<double> timeStreams;
+
+    std::vector<double> timeEnc{}; // [0] - testDefaul, [1] - testPinned, [2] - testManaged, [3] - testStreams with one stream, [4] - testStreams with four streams
+    std::vector<double> timeEncAndCopy{}; // [0] - testDefaul, [1] - testPinned, [2] - testManaged
+
+    timeEnc.resize(5);
+    timeEncAndCopy.resize(3);
 
     for (size_t i = range[0]; i <= range[1]; i = i * 2) {
         timeRes tempTimeRes;
@@ -236,95 +220,73 @@ void testSpeedKuznechik(const std::string& path, const std::vector<size_t> range
         newPath.append("\\");
         newPath.append(std::to_string(i));
         newPath.append("bytes");
-        readFileKuznechik(newPath, buffer);
 
-        replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
+        for (size_t j = 0; j < 10; ++j) {
+            readFileKuznechik(newPath, buffer);
 
-        tempTimeRes.time = testKuznechik.testDefault(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testDefault", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testKuznechik.testDefault(buffer, blockSize, gridSize, true, realeseVersion);
 
-        replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
+            timeVector.push_back(tempTimeRes);
 
-        tempTimeRes.time = testKuznechik.testPinned(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testPinned", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testKuznechik.testPinned(buffer, blockSize, gridSize, true, realeseVersion);
 
-        replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
+            timeVector.push_back(tempTimeRes);
 
-        tempTimeRes.time = testKuznechik.testManaged(buffer, blockSize, gridSize, true);
+            replaceTimeRes(tempTimeRes, newPath, "testManaged", true, i);
 
-        timeVector.push_back(tempTimeRes);
+            tempTimeRes.time = testKuznechik.testManaged(buffer, blockSize, gridSize, true, realeseVersion);
+
+            timeVector.push_back(tempTimeRes);
+
+            timeEnc[3] += testKuznechik.testStreams(buffer, blockSize, gridSize, 1, 8 * 1024 * 1024, true, realeseVersion);
+
+            timeEnc[4] += testKuznechik.testStreams(buffer, blockSize, gridSize, 4, 8 * 1024 * 1024, true, realeseVersion);
+
+            buffer.clear();
+        }
 
         newPath.append("Enc");
 
-        std::ofstream file(newPath, std::ios::binary);
-        if (!file) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        file.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        file.close();
-
-        /*replaceTimeRes(tempTimeRes, newPath, "testManaged", false, i);
-
-        tempTimeRes.time = testMagma.testManaged(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-
-        replaceTimeRes(tempTimeRes, newPath, "testPinned", false, i);
-
-        tempTimeRes.time = testMagma.testPinned(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-
-
-        replaceTimeRes(tempTimeRes, newPath, "testDefault", false, i);
-
-        tempTimeRes.time = testMagma.testDefault(buffer, blockSize, gridSize, false);
-
-        timeVector.push_back(tempTimeRes);
-
-        newPath.append("Dec");
-
-        std::ofstream fileDec(newPath, std::ios::binary);
-        if (!fileDec) {
-            std::cerr << "Error creating file: " << newPath << std::endl;
-            return;
-        }
-        fileDec.write((char*)buffer.data()->bytes, sizeof(magmaBlockT) * buffer.size());
-        fileDec.close();
-        */
-
         newPath.clear();
-
-        timeStreams.push_back(testKuznechik.testStreams(buffer, 256, 1024 * 16, 4, 8192, true));
-
-        buffer.clear();
     }
 
-    //std::cout << "Name test;size;enc;gridSize;blockSize;timeCopyAndEnc;timeEnc" << std::endl;
-    //for (auto elem : timeVector) {
-    //    //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
-    //    //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
-    //    //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
-    //    
-    //    std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
-    //        (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << ";" << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << std::endl;
-    //}
-    // std::cout << "Name test;size;enc;gridSize;blockSize;speedCopyAndEnc;speedEnc" << std::endl;
     for (auto elem : timeVector) {
-        //std::cout << elem.testName << ": size: " << elem.size / 1024 / 1024.0 << "MB path: " << elem.path << " enc: " << elem.encrypt << std::endl;
-       //std::cout << "blockSize: " << blockSize << "; gridSize: " << gridSize << std::endl;
-       //std::cout << "Time copyAndEnc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000) << "GB/s; Time enc: " << (elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000) << "GB/s" << std::endl;
-
-        std::cout << elem.testName << ";" << elem.size / 1024 / 1024.0 << ";" << elem.encrypt << ";" << gridSize << ";" << blockSize << ";" <<
-            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << ";" << 
-            ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 << std::endl;
+        if (elem.testName == "testDefault") {
+            timeEnc[0] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[0] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
+        if (elem.testName == "testPinned") {
+            timeEnc[1] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[1] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
+        if (elem.testName == "testManaged") {
+            timeEnc[2] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[1] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+            timeEncAndCopy[2] += ((elem.size / 1024 / 1024.0 / 1024) / (elem.time[0] / 1000)) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+        }
     }
 
-    std::cout << "TimeStreams:" << std::endl;
-    for (auto elem : timeStreams) {
-        std::cout << (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8 / (elem / 1000) << std::endl;
-    }
+    /*for (auto elem : timeResStreamVector) {
+        timeEnc[3] += (elem.size / 1024 / 1024.0 / 1024) / (elem.time / 1000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+    }*/
+
+    timeEnc[0] = timeEnc[0] / 10.0;
+    timeEnc[1] = timeEnc[1] / 10.0;
+    timeEnc[2] = timeEnc[2] / 10.0;
+    timeEnc[3] = 1.0 / (timeEnc[3] / 10000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+    timeEnc[4] = 1.0 / (timeEnc[4] / 10000) * (1024 * 1024 * 1024) / (1000 * 1000 * 1000) * 8;
+
+    timeEncAndCopy[0] = timeEncAndCopy[0] / 10.0;
+    timeEncAndCopy[1] = timeEncAndCopy[1] / 10.0;
+    timeEncAndCopy[2] = timeEncAndCopy[2] / 10.0;
+
+    std::cout << "Encryption speed for mode copy 'Default': " << timeEnc[0] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[0] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed for mode copy 'Pinned': " << timeEnc[1] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[1] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed for mode copy 'Managed': " << timeEnc[2] << " Gb/s\nEncryption speed with copy: " << timeEncAndCopy[2] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed with use one stream command: " << timeEnc[3] << " Gb/s" << std::endl;
+    std::cout << "Encryption speed with use four streams command: " << timeEnc[4] << " Gb/s" << std::endl;
+
 }

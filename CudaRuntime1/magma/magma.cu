@@ -106,14 +106,11 @@ static __global__ void encryptMgm(const magmaKeySet& round_key, magmaBlockT* blo
     for (auto i = tid; i < count; i+=tcnt) {
 
         magmaBlockT tempBlock = blocks[i];
-        // Первое преобразование G
         tempBlock = magma_G(s_keys.keys[0], tempBlock, t);
-        // Последующие (со второго по тридцать первое) преобразования G
         for (int j = 1; j < 24; ++j)
             tempBlock = magma_G(s_keys.keys[j % 8], tempBlock, t);
         for (int j = 0; j < 7; ++j)
             tempBlock = magma_G(s_keys.keys[7 - j % 8], tempBlock, t);
-        // Последнее (тридцать второе) преобразование G
         blocks[i] = magma_G_last(s_keys.keys[0], tempBlock, t);
     }
 }

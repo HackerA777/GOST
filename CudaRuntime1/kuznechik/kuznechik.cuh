@@ -16,11 +16,11 @@ public:
 
     void processData2(kuznechikByteVector* src, kuznechikByteVector* dest, const size_t countBlocks, bool enc) const;
 
-    std::vector<float> testDefault(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
-    std::vector<float> testPinned(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus);
-    std::vector<float> testManaged(std::vector<kuznechikByteVector>& data, const size_t blokSize, const size_t gridSize, const bool encryptStatus);
+    std::vector<float> testDefault(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion);
+    std::vector<float> testPinned(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion);
+    std::vector<float> testManaged(std::vector<kuznechikByteVector>& data, const size_t blokSize, const size_t gridSize, const bool encryptStatus, const int realeseVersion);
 
-    double testStreams(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t blocksPerStream, const bool encryptStatus);
+    double testStreams(std::vector<kuznechikByteVector>& data, const size_t blockSize, const size_t gridSize, const size_t countStreams, const size_t blocksPerStream, const bool encryptStatus, const int realeseVersion);
 
     void setBlockSize(const size_t newBlockSize);
     void setGridSize(const size_t newGridSize);
